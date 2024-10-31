@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="initial-scale=1.0">
+    <title>Road works, delays and events</title>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css' rel='stylesheet' />
+</head>
+<body>
+    <div id="map"></div>
+    <div class="tooltip" id="tooltip"></div>
+    <div id="searchBar">
+        <input type="text" id="address" placeholder="Enter an address" autocomplete="off" />
+        <button id="searchBtn">Search</button>
+        <div id="suggestions" style="position: absolute; background: white; border: 1px solid #ccc; z-index: 10; display: none;"></div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        .mapboxgl-ctrl-logo {
+            display: none !important;
+        }
+        #legend {
+            position: absolute;
+            bottom: 60px;
+            left: 10px;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .legend-key {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+        #searchBar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+        }
+        #dateFilter {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal {
+            display: none;
+            position: fixed; 
+            z-index: 1; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px; 
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80%; 
+            overflow-y: auto; 
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+        }
+        
+        .modal-content p {
+            margin: 5px 0;
+            line-height: 1.2;
+        }
+        
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        @media (max-width: 200px) {
+            .modal-content {
+                width: 95%;
+            }
+        }
+        
+        #legend {
+            user-select: none; 
+        }
+
+        .legend-key {
+            cursor: pointer;
+        }
+        </style>
+
+<div id="legend">
+    <div class="legend-key" data-layer="Road Closed">
+        <img class="legend-icon" src="https://raw.githubusercontent.com/MeltonEngServ/Traffic-Management-Plans-Registry/refs/heads/main/assets/road-closed-icon.png" alt="Road Closed Icon" style="width: 25px; height: 25px; margin-right: 5px;">
+        <span>Road Closed</span>
+    </div>
+    <div class="legend-key" data-layer="Lane Closure">
+        <img class="legend-icon" src="https://raw.githubusercontent.com/MeltonEngServ/Traffic-Management-Plans-Registry/refs/heads/main/assets/lane-closure-icon.png" alt="Lane Closure Icon" style="width: 25px; height: 25px; margin-right: 5px;">
+        <span>Lane Closure</span>
+    </div>
+    <div class="legend-key" data-layer="Temporary Traffic Signals">
+        <div class="legend-color" style="background-color: #294184;"></div>
+        <span>Temporary Traffic Signals</span>
+    </div>
+    <div class="legend-key" data-layer="Truck Site Access">
+        <img class="legend-icon" src="https://raw.githubusercontent.com/MeltonEngServ/Traffic-Management-Plans-Registry/refs/heads/main/assets/truck-site-access-icon.png" alt="Truck Site Access Icon" style="width: 25px; height: 25px; margin-right: 5px;">
+        <span>Truck Site Access</span>
+    </div>
+    <div class="legend-key" data-layer="No Traffic Impacts">
+        <div class="legend-color" style="background-color: #87d30f;"></div>
+        <span>No Traffic Impacts</span>
+    </div>
+    <div class="legend-key" data-layer="Not Defined">
+        <div class="legend-color" style="background-color: #cf04b4;"></div>
+        <span>Traffic Impact Not Defined</span>
+    </div>
+    <div class="legend-key" data-layer="Upcoming">
+        <div class="legend-color" style="background-color: #f711ff;"></div>
+        <span>Upcoming Subdivision Works</span>
+    </div>
+    <div class="legend-key" data-layer="In construction">
+        <div class="legend-color" style="background-color: #ff9011;"></div>
+        <span>Subdivision Works In Construction</span>
+    </div>
+    <div class="legend-key" data-layer="Landscape In Construction">
+        <div class="legend-color" style="background-color: #ff9011;"></div>
+        <span>Landscape In Construction</span>
+    </div>
+    <div class="legend-key" data-layer="Bulk earth & sewer">
+        <div class="legend-color" style="background-color: #a37002;"></div>
+        <span>Bulk earth & sewer</span>
+    </div>
+    <div class="legend-key" data-layer="Primary Arterial">
+        <div class="legend-color" style="background-color: #ed4e4e;"></div>
+        <span>Primary Arterial</span>
+    </div>
+    <div class="legend-key" data-layer="Secondary Arterial">
+        <div class="legend-color" style="background-color: #ff983e;"></div>
+        <span>Secondary Arterial</span>
+    </div>
+    <div class="legend-key" data-layer="Connector">
+        <div class="legend-color" style="background-color: #ffe46b;"></div>
+        <span>Connector Road</span>
+    </div>
+    <div class="legend-key" data-layer="Local">
+        <div class="legend-color" style="background-color: #76bf00;"></div>
+        <span>Local Road</span>
+    </div>
+    <div class="legend-key" data-layer="Land">
+        <div class="legend-color" style="background-color: #00bf86;"></div>
+        <span>Land</span>
+    </div>
+    <div class="legend-key" data-layer="Transport">
+        <div class="legend-color" style="background-color: #dd9000;"></div>
+        <span>Transport</span>
+    </div>
+</div>
+    
+    <div id="dateFilter">
+        <input type="date" id="dateInput" />
+        <input type="range" id="slider" min="0" max="100" />
+    </div>
+    
+    <script>
+        mapboxgl.accessToken = 'pk.eyJ1Ijoiam9obnN0b253IiwiYSI6ImNtMmIxNDRuZzBueGkycm9teG5mcXNqeWEifQ.98yyaDXx0p9HVr3nuNibrA';
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: [144.646838,-37.712344],
+            zoom: 11
+        });
+    
+        const tooltip = document.getElementById('tooltip');
+        const dateInput = document.getElementById('dateInput');
+        const slider = document.getElementById('slider');
+        const visibilityStates = {};
+    
+        document.querySelectorAll('.legend-key').forEach(item => {
+            const layerId = item.getAttribute('data-layer');
+            visibilityStates[layerId] = true; 
+        });
+    
+
+
+// Add nav controls to the map
+map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+
+// Bind search box to area   
+const bbox = [144.439004, -37.857166, 144.829723, -37.464500]; // [westLng, southLat, eastLng, northLat]
+
+// Event listener for Search
+const addressInput = document.getElementById('address');
+const suggestionsDiv = document.getElementById('suggestions');
+
+// Event listener for input changes
+addressInput.addEventListener('input', function() {
+    const query = this.value;
+
+    if (query.length > 2) {
+        const geocodeUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?bbox=${bbox.join(',')}&access_token=${mapboxgl.accessToken}`;
+
+        fetch(geocodeUrl)
+            .then(response => response.json())
+            .then(data => {
+                suggestionsDiv.innerHTML = '';
+                
+                if (data.features && data.features.length > 0) {
+                    suggestionsDiv.style.display = 'block'; 
+                    data.features.forEach(feature => {
+                        const suggestionItem = document.createElement('div');
+
+                        // Set inline styles for the suggestion item
+                        suggestionItem.textContent = feature.place_name; 
+                        suggestionItem.style.cursor = 'pointer';
+                        suggestionItem.style.padding = '5px';
+                        suggestionItem.style.borderBottom = '1px solid #ddd'; 
+                        suggestionItem.style.backgroundColor = 'white';
+                        suggestionItem.style.transition = 'background-color 0.2s'; 
+
+                        // Change background color on hover
+                        suggestionItem.addEventListener('mouseenter', () => {
+                            suggestionItem.style.backgroundColor = '#f0f0f0';
+                        });
+                        suggestionItem.addEventListener('mouseleave', () => {
+                            suggestionItem.style.backgroundColor = 'white';
+                        });
+
+                        suggestionItem.addEventListener('click', () => {
+                            selectSuggestion(feature);
+                        });
+                        suggestionsDiv.appendChild(suggestionItem);
+                    });
+                } else {
+                    suggestionsDiv.style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching geocode suggestions:', error);
+            });
+    } else {
+        suggestionsDiv.style.display = 'none';
+    }
+});
+
+// Function to handle selecting a suggestion
+function selectSuggestion(feature) {
+    addressInput.value = feature.place_name; 
+    suggestionsDiv.style.display = 'none'; 
+    const coordinates = feature.geometry.coordinates;
+
+    map.flyTo({
+        center: coordinates,
+        zoom: 15
+    });
+    // Clear input
+    addressInput.value = '';
+
+    // Marker
+    new mapboxgl.Marker()
+        .setLngLat(coordinates)
+        .addTo(map);
+}
+
+
+// Function to parse the date string (YYYY-MM-DD) into a JavaScript Date object
+function parseDateString(dateString) {
+    if (!dateString) return null;
+
+    const [year, month, day] = dateString.split('-');
+    return new Date(year, month - 1, day);
+}
+
+let visibleStatuses = []
+
+// Function to filter traffic data
+function filterDataTMP() {
+    const geojsonData = window.originalTMPData;
+    const selectedDate = new Date(dateInput.value);
+    selectedDate.setHours(0, 0, 0, 0);
+
+    const oneYearBeforeSelectedDate = new Date(selectedDate);
+    oneYearBeforeSelectedDate.setFullYear(selectedDate.getFullYear() - 1);
+
+    // Filter features based on visible statuses and date
+    const filteredFeatures = geojsonData.features.filter(feature => {
+        const startDateStr = feature.properties.road_work_start_date;
+        const endDateStr = feature.properties.road_work_end_date;
+
+        const roadWorkStart = parseDateString(startDateStr); 
+        const roadWorkEnd = parseDateString(endDateStr);
+
+        // Exclude records if no end date is provided and the start date is more than a year before the selected date
+        if (roadWorkEnd === null && roadWorkStart < oneYearBeforeSelectedDate) {
+            return false;
+        }
+
+        // Check if feature's dates fit within the selected date range
+        const isDateValid = (roadWorkStart && roadWorkEnd)
+            ? (selectedDate >= roadWorkStart && selectedDate <= roadWorkEnd)
+            : (roadWorkStart ? selectedDate >= roadWorkStart : roadWorkEnd && selectedDate <= roadWorkEnd);
+
+        // Status visibility check
+        const isStatusVisible = visibleStatuses.length === 0 || 
+                                (feature.properties.status && visibleStatuses.includes(feature.properties.status.trim()));
+
+        // Return true if visible
+        return isDateValid && isStatusVisible;
+    });
+
+    const filteredGeoJson = {
+        type: 'FeatureCollection',
+        features: filteredFeatures
+    };
+
+    map.getSource('Traffic TMP Registry').setData(filteredGeoJson);
+}
+
+
+// Function to filter Subdivision Construction data
+function filterDataCHP() {
+    const geojsonData = window.originalSubdivisionData;
+    const selectedDate = new Date(dateInput.value);
+    selectedDate.setHours(0, 0, 0, 0);
+
+    // Define the allowed statuses
+    const allowedStatuses = [
+        'Upcoming',
+        'In construction',
+        'Landscape In Construction',
+        'Bulk earth & sewer'
+    ];
+
+    const filteredFeatures = geojsonData.features.filter(feature => {
+        const edlpCommencementDateStr = feature.properties.edlp_commencement_date;
+        const status = feature.properties.status;
+        
+
+        const edlpCommencementDate = parseDateString(edlpCommencementDateStr);
+
+        // Check if EDLP commencement date has passed
+        const hasDatePassed = edlpCommencementDate && edlpCommencementDate < selectedDate;
+
+        // Determine if the feature's status is in allowedStatuses and in visibleStatuses
+        const isAllowedStatus = allowedStatuses.includes(status);
+        const isVisibleStatus = visibleStatuses.length === 0 || visibleStatuses.includes(status);
+
+        // Show features with selected or allowed statuses where the date has not passed (or date is null)
+        return isAllowedStatus && isVisibleStatus && (!hasDatePassed || edlpCommencementDate === null);
+    });
+
+    const filteredGeoJson = {
+        type: 'FeatureCollection',
+        features: filteredFeatures
+    };
+
+    map.getSource('Subdivision Construction').setData(filteredGeoJson);
+}
+
+// Function to filter PSP road data
+function filterDataPSP() {
+    const geojsonData = window.originalPSP; 
+
+    // Define the allowed statuses
+    const allowedStatuses = [
+        'Local',
+        'Connector',
+        'Primary Arterial',
+        'Secondary Arterial'
+    ];
+
+    const filteredFeatures = geojsonData.features.filter(feature => {
+        const roadStatus = feature.properties._road_status ? feature.properties._road_status.trim() : '';
+        const status = feature.properties.status ? feature.properties.status.trim() : '';
+
+        // Check if the feature's _road_status includes the word "Proposed"
+        const isProposed = roadStatus.includes("Proposed");
+
+        // Determine if the feature's status is in allowedStatuses and in visibleStatuses
+        const isAllowedStatus = allowedStatuses.includes(status);
+        const isVisibleStatus = visibleStatuses.length === 0 || visibleStatuses.includes(status);
+
+        // Return only records that are visible
+        return isProposed && isVisibleStatus;
+    });
+
+    const filteredGeoJson = {
+        type: 'FeatureCollection',
+        features: filteredFeatures
+    };
+
+    map.getSource('PSP Road Cross Sections').setData(filteredGeoJson);
+    
+}
+
+
+// Function to filter Infrastructure Planning/Assets data
+function filterDataIPAssets() {
+    const geojsonData = window.originalIPAssets;
+    const selectedDate = new Date(dateInput.value);
+    selectedDate.setHours(0, 0, 0, 0);
+
+    // Define the allowed statuses
+    const allowedStatuses = [
+        'Land',
+        'Transport'
+    ];
+
+    const filteredFeatures = geojsonData.features.filter(feature => {
+        const status = feature.properties.status;
+        const projectStartStr = feature.properties.project_or_program_start_year ? feature.properties.project_or_program_start_year.trim() : null;
+
+        let projectStartDate = null;
+        if (projectStartStr && projectStartStr.match(/^\d{2}\/\d{2}$/)) {
+            // Parse "YY/YY" format
+            const yearSuffix = projectStartStr.split('/')[1];
+            const year = `20${yearSuffix}`;
+            projectStartDate = new Date(`July 1, ${year}`);
+        } else if (projectStartStr && projectStartStr.includes('1st July')) {
+            const year = parseInt(projectStartStr.split(' ')[2], 10);
+            projectStartDate = new Date(`July 1, ${year}`);
+        }
+
+        // Check if the project start date has not passed
+        const hasProjectStartDateNotPassed = projectStartDate && selectedDate < projectStartDate;
+
+        // Determine if the feature's status is in allowedStatuses and in visibleStatuses
+        const isAllowedStatus = allowedStatuses.includes(status);
+        const isVisibleStatus = visibleStatuses.length === 0 || visibleStatuses.includes(status);
+
+        // Only include features with future start dates or no start date at all
+        const shouldIncludeFeature = isAllowedStatus && isVisibleStatus && (hasProjectStartDateNotPassed || projectStartDate === null);
+
+        return shouldIncludeFeature;
+    });
+
+    const filteredGeoJson = {
+        type: 'FeatureCollection',
+        features: filteredFeatures
+    };
+
+    map.getSource('Infrastructure Planning/Assets').setData(filteredGeoJson);
+}
+
+
+
+
+
+// Event listener to legend items
+document.querySelectorAll('.legend-key').forEach(item => {
+    item.addEventListener('click', () => {
+        const layerId = item.getAttribute('data-layer');
+
+        // Toggle the status in visibleStatuses
+        if (visibleStatuses.includes(layerId)) {
+            // If already in visibleStatuses, remove it
+            visibleStatuses = visibleStatuses.filter(status => status !== layerId);
+        } else {
+            // Else add it
+            visibleStatuses.push(layerId);
+        }
+
+        // Check if no filters are selected
+        if (visibleStatuses.length === 0) {
+            // Set all legend items to full opacity
+            document.querySelectorAll('.legend-key').forEach(legendItem => {
+                legendItem.style.opacity = '1';
+            });
+        } else {
+            // Update opacity of all legend items based on selection
+            document.querySelectorAll('.legend-key').forEach(legendItem => {
+                const legendLayerId = legendItem.getAttribute('data-layer');
+                legendItem.style.opacity = visibleStatuses.includes(legendLayerId) ? '1' : '0.5';
+            });
+        }
+
+        // Apply the filters
+        filterDataTMP();
+        filterDataCHP();
+        filterDataPSP();
+        filterDataIPAssets();
+    });
+});
+
+
+// Event listener for date input (manual input)
+dateInput.addEventListener('change', function() {
+    const selectedDate = this.value;
+    slider.value = new Date(selectedDate).getTime(); 
+    filterDataTMP();
+    filterDataCHP();
+    filterDataIPAssets();
+});
+    
+// Event listener for slider input (date slider)
+slider.addEventListener('input', function() {
+    const selectedDate = new Date(parseInt(this.value));
+    dateInput.value = selectedDate.toISOString().slice(0, 10); 
+    filterDataTMP();
+    filterDataCHP();
+    filterDataIPAssets();
+});
+
+
+// Initialize map
+map.on('load', function () {
+    const today = new Date();
+    const sixMonthsPast = new Date();
+    sixMonthsPast.setMonth(today.getMonth() - 6);
+
+    const sixtyMonthsFuture = new Date();
+    sixtyMonthsFuture.setMonth(today.getMonth() + 60);
+
+    // Update slider attributes
+    slider.min = sixMonthsPast.getTime();
+    slider.max = sixtyMonthsFuture.getTime();
+    slider.value = today.getTime();
+    dateInput.value = today.toISOString().slice(0, 10);
+
+
+    // Global variables for each dataset
+    window.originalTMPData = null; // For Traffic TMP Registry
+    window.originalSubdivisionData = null; // For Subdivision Construction
+    window.originalPSP = null; // PSP Road
+    window.originalIPAssets = null; // For Infrastructure Planning/Assets
+
+    // Fetch and store the original data for filtering
+    fetch('https://web.fulcrumapp.com/shares/7720c6835056cfa0.geojson')
+        .then(response => response.json())
+        .then(data => {
+            window.originalTMPData = data; 
+            addGeoJsonData('https://web.fulcrumapp.com/shares/7720c6835056cfa0.geojson', 'Traffic TMP Registry');  //Traffic TMP Registry
+        });
+
+    fetch('https://web.fulcrumapp.com/shares/bf60f595b238b79a.geojson')
+        .then(response => response.json())
+        .then(data => {
+            window.originalSubdivisionData = data; 
+            addGeoJsonData('https://web.fulcrumapp.com/shares/bf60f595b238b79a.geojson', 'Subdivision Construction');   //Subdivision Construction
+        });
+
+    fetch('https://web.fulcrumapp.com/shares/bb8aae5257d194f5.geojson')
+        .then(response => response.json())
+        .then(data => {
+            window.originalPSP = data; 
+            addGeoJsonData('https://web.fulcrumapp.com/shares/bb8aae5257d194f5.geojson', 'PSP Road Cross Sections');   //PSP Road Cross Sections
+        });
+
+     fetch('https://web.fulcrumapp.com/shares/c84039d55fcd0f7c.geojson')
+         .then(response => response.json())
+         .then(data => {
+             window.originalIPAssets = data; 
+             addGeoJsonData('https://web.fulcrumapp.com/shares/c84039d55fcd0f7c.geojson', 'Infrastructure Planning/Assets');  //Infrastructure Planning/Assets
+         });
+
+
+    const icons = {
+        'road-closed': 'https://raw.githubusercontent.com/MeltonEngServ/Traffic-Management-Plans-Registry/refs/heads/main/assets/road-closed-icon.png',
+        'lane-closure': 'https://raw.githubusercontent.com/MeltonEngServ/Traffic-Management-Plans-Registry/refs/heads/main/assets/lane-closure-icon.png',
+        'truck-site-access': 'https://raw.githubusercontent.com/MeltonEngServ/Traffic-Management-Plans-Registry/refs/heads/main/assets/truck-site-access-icon.png'
+    };
+
+    // Load each icon image
+    Object.keys(icons).forEach(key => {
+        map.loadImage(icons[key], (error, image) => {
+            if (error) {
+                console.error(`Error loading ${key}:`, error);
+                return;
+            }
+            map.addImage(key, image);
+        });
+    });
+
+});
+
+
+function addGeoJsonData(geojsonUrl, sourceId) {
+    fetch(geojsonUrl)
+        .then(response => response.json())
+        .then(data => {
+            map.addSource(sourceId, {
+                type: 'geojson',
+                data: data
+            });
+
+// Icon layer
+map.addLayer({
+    'id': `${sourceId}-icon-layer`,
+    'type': 'symbol',
+    'source': sourceId,
+    'filter': [
+        'any',
+        ['==', ['get', 'status'], 'Road Closed'],
+        ['==', ['get', 'status'], ' Lane Closure'],
+        ['==', ['get', 'status'], 'Truck Site Access']
+    ],
+    'layout': {
+        'icon-image': [
+            'case',
+            ['==', ['get', 'status'], 'Road Closed'], 'road-closed',
+            ['==', ['get', 'status'], ' Lane Closure'], 'lane-closure',
+            ['==', ['get', 'status'], 'Truck Site Access'], 'truck-site-access',
+            'default-icon' // Optional default if no match found
+        ],
+        'icon-size': 0.7,
+        'icon-allow-overlap': true
+    }
+});
+
+// Points layer
+map.addLayer({
+    'id': `${sourceId}-points-layer`,
+    'type': 'circle',
+    'source': sourceId,
+    'filter': ['==', '$type', 'Point'],
+    'paint': {
+        'circle-radius': 5,
+        'circle-color': [
+            'case',
+            //Traffic
+            ['==', ['get', 'status'], 'Temporary Traffic Signals'], '#294184',
+            ['==', ['get', 'status'], 'No Traffic Impacts'], '#87d30f',
+            ['==', ['get', 'status'], 'Not Defined'], '#cf04b4',
+            //Subdivisions
+            ['==', ['get', 'status'], 'Upcoming'], '#f711ff',
+            ['==', ['get', 'status'], 'In construction'], '#ff9011',
+            ['==', ['get', 'status'], 'Landscape In Construction'], '#ff9011',
+            ['==', ['get', 'status'], 'Bulk earth & sewer'], '#a37002',
+            //PSP Road Cross Sections
+            ['==', ['get', 'status'], 'Local'], '#76bf00',
+            ['==', ['get', 'status'], 'Connector'], '#ffe46b',
+            ['==', ['get', 'status'], 'Secondary Arterial'], '#ff983e',
+            ['==', ['get', 'status'], 'Primary Arterial'], '#ed4e4e',
+            //Infrastructure Planning/Assets
+            ['==', ['get', 'status'], 'Land'], '#00bf86',
+            ['==', ['get', 'status'], 'Transport'], '#dd9000',
+            '#888888'
+        ],
+        // Control opacity based on icon availability
+        'circle-opacity': [
+            'case',
+            ['==', ['get', 'status'], 'Road Closed'], 0, 
+            ['==', ['get', 'status'], ' Lane Closure'], 0, 
+            ['==', ['get', 'status'], 'Truck Site Access'], 0, 
+            1
+        ]
+    }
+});
+
+// Line layer
+map.addLayer({
+    'id': `${sourceId}-lines-layer`,
+    'type': 'line',
+    'source': sourceId,
+    'filter': ['==', '$type', 'LineString'],
+    'paint': {
+        'line-width': 3,
+        'line-color': [
+            'case',
+            //Traffic
+            ['==', ['get', 'status'], 'Road Closed'], '#db0000',
+            ['==', ['get', 'status'], ' Lane Closure'], '#ff8819',
+            ['==', ['get', 'status'], 'Temporary Traffic Signals'], '#294184',
+            ['==', ['get', 'status'], 'Truck Site Access'], '#1891c9',
+            ['==', ['get', 'status'], 'No Traffic Impacts'], '#87d30f',
+            ['==', ['get', 'status'], 'Not Defined'], '#cf04b4',
+            //Subdivisions
+            ['==', ['get', 'status'], 'Upcoming'], '#f711ff',
+            ['==', ['get', 'status'], 'In construction'], '#ff9011',
+            ['==', ['get', 'status'], 'Landscape In Construction'], '#ff9011',
+            ['==', ['get', 'status'], 'Bulk earth & sewer'], '#a37002',
+            //PSP Road Cross Sections
+            ['==', ['get', 'status'], 'Local'], '#76bf00',
+            ['==', ['get', 'status'], 'Connector'], '#ffe46b',
+            ['==', ['get', 'status'], 'Secondary Arterial'], '#ff983e',
+            ['==', ['get', 'status'], 'Primary Arterial'], '#ed4e4e',
+            //Infrastructure Planning/Assets
+            ['==', ['get', 'status'], 'Land'], '#00bf86',
+            ['==', ['get', 'status'], 'Transport'], '#dd9000',
+            '#888888'
+        ]
+    }
+});
+
+// Polygon layer
+map.addLayer({
+    'id': `${sourceId}-polygons-layer`,
+    'type': 'fill',
+    'source': sourceId,
+    'filter': ['==', '$type', 'Polygon'],
+    'paint': {
+        'fill-color': [
+            'case',
+            //Traffic
+            ['==', ['get', 'status'], 'Road Closed'], '#db0000',
+            ['==', ['get', 'status'], ' Lane Closure'], '#ff8819',
+            ['==', ['get', 'status'], 'Temporary Traffic Signals'], '#294184',
+            ['==', ['get', 'status'], 'Truck Site Access'], '#1891c9',
+            ['==', ['get', 'status'], 'No Traffic Impacts'], '#87d30f',
+            ['==', ['get', 'status'], 'Not Defined'], '#cf04b4',
+            //Subdivisions
+            ['==', ['get', 'status'], 'Upcoming'], '#f711ff',
+            ['==', ['get', 'status'], 'In construction'], '#ff9011',
+            ['==', ['get', 'status'], 'Landscape In Construction'], '#ff9011',
+            ['==', ['get', 'status'], 'Bulk earth & sewer'], '#a37002',
+            //PSP Road Cross Sections
+            ['==', ['get', 'status'], 'Local'], '#76bf00',
+            ['==', ['get', 'status'], 'Connector'], '#ffe46b',
+            ['==', ['get', 'status'], 'Secondary Arterial'], '#ff983e',
+            ['==', ['get', 'status'], 'Primary Arterial'], '#ed4e4e',
+            //Infrastructure Planning/Assets
+            ['==', ['get', 'status'], 'Land'], '#00bf86',
+            ['==', ['get', 'status'], 'Transport'], '#dd9000',
+            '#888888'
+        ],
+        'fill-opacity': 0.5
+    }
+});
+
+
+// Function to apply filters once sources initialised
+function applyFiltersWhenSourcesReady() {
+    const sourcesToCheck = [
+        { sourceId: 'Subdivision Construction', filterFunction: filterDataCHP },
+        { sourceId: 'Traffic TMP Registry', filterFunction: filterDataTMP },
+        { sourceId: 'PSP Road Cross Sections', filterFunction: filterDataPSP },
+        { sourceId: 'Infrastructure Planning/Assets', filterFunction: filterDataIPAssets }
+    ];
+
+
+    let allSourcesReady = true;
+
+    sourcesToCheck.forEach(source => {
+        if (map.getSource(source.sourceId)) {
+            // If source is ready, apply its filter
+            source.filterFunction();
+        } else {
+            // If any source isn't ready, set the flag to retry
+            allSourcesReady = false;
+        }
+    });
+
+    // Retry if not all sources are ready
+    if (!allSourcesReady) {
+        setTimeout(applyFiltersWhenSourcesReady, 100); // Retry every 100ms until all sources are loaded
+    }
+}
+
+applyFiltersWhenSourcesReady();
+
+// Function to formate date for user readability (eg 20th Oct, 2024)
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    
+    if (isNaN(date)) return 'N/A';
+
+    const day = date.getDate();
+    const month = date.toLocaleString('default', { month: 'short' }).substring(0, 3);
+    const year = date.getFullYear();
+
+    const suffix = (day) => {
+        const j = day % 10, k = day % 100;
+        if (j === 1 && k !== 11) return day + "st";
+        if (j === 2 && k !== 12) return day + "nd";
+        if (j === 3 && k !== 13) return day + "rd";
+        return day + "th";
+    };
+
+    return `${suffix(day)} ${month}, ${year}`;
+}
+
+
+// Create a popup
+const popup = new mapboxgl.Popup({
+    closeButton: false,
+    closeOnClick: false
+});
+
+// Define layers to interact with (points, lines, polygons)
+const layers = [`${sourceId}-points-layer`, `${sourceId}-lines-layer`, `${sourceId}-polygons-layer`, `${sourceId}-icon-layer`];
+
+// Show tooltip on hover
+layers.forEach(layer => {
+    map.on('mouseenter', layer, (e) => {
+        map.getCanvas().style.cursor = 'pointer';
+
+        // Use lngLat from the event directly
+        const coordinates = [e.lngLat.lng, e.lngLat.lat];
+        const properties = e.features[0].properties;
+
+        // Create tooltip field array
+        const fields = [
+            { label: 'Road Name', value: properties.road },
+            { label: 'Title', value: properties.precinct_structure_plan },
+            { label: 'Estate Name', value: properties.estate_name },
+            { label: 'Estate Name', value: properties.estate_name_other },
+            { label: 'Stage', value: properties.stage_id },
+            { label: 'Project Name', value: properties.project_name },
+                { label: 'Status', value: properties.status },
+            { label: 'Road Category', value: properties.road_category },
+            { label: 'Project or Program Start Year', value: properties.project_or_program_start_year },
+            { label: 'Project Progress', value: properties.project_progress },
+            { label: 'Project Updates', value: properties.updates }
+        ];
+
+        let tooltipContent = '';
+        
+        // Add non empty fields
+        fields.forEach(field => {
+            // Hide empty and N/A fields
+            if (field.value && field.value !== 'N/A') {
+                tooltipContent += `<strong>${field.label}:</strong> ${field.value}<br>`;
+            }
+        });
+
+        // Check and add Road Work Start Date for TMP only
+        const startDate = formatDate(properties.road_work_start_date);
+        if (startDate && startDate !== 'N/A') {
+            tooltipContent += `<strong>Road Work Start Date:</strong> ${startDate}<br>`;
+
+            // Only add the Road Work End Date if the start date exists
+            const endDate = formatDate(properties.road_work_end_date);
+            if (endDate && endDate !== 'N/A') {
+                tooltipContent += `<strong>Road Work End Date:</strong> ${endDate}<br>`;
+            }
+        }
+
+        // If no valid fields are found, provide a default message
+        if (!tooltipContent) {
+            tooltipContent = '<strong>No data available</strong>';
+        }
+
+        // Display the tooltip using the lngLat values directly
+        popup.setLngLat(e.lngLat)
+            .setHTML(tooltipContent)
+            .addTo(map);
+
+        // Update tooltip position on mousemove
+        // Currently the tooltip doesnt update when moving across 2 different shapes, needs to be reset before updating tooltip info
+        map.on('mousemove', layer, (e) => {
+            popup.setLngLat(e.lngLat);
+        });
+    });
+
+    // Hide tooltip on mouse leave
+    map.on('mouseleave', layer, () => {
+        map.getCanvas().style.cursor = '';
+        popup.remove();
+
+        // Remove the mousemove event listener
+        map.off('mousemove', layer);
+    });
+
+
+    // Click event to show modal popup
+    map.on('click', layer, (e) => {
+        const properties = e.features[0].properties;
+        
+        //console.log(e);
+        console.log(properties)
+
+        let modalContent = `<h3>${
+                                //Traffic
+                                properties.road || 
+                                //Subdivision Construction
+                                properties.estate_name || 
+                                properties.estate_name_other || 
+                                //PSP Roads
+                                properties.precinct_structure_plan ||
+                                //Infrastructure Planning/Assets
+                                properties.project_name ||
+                                'N/A'}</h3>`;
+
+        // Create modal pop-up field array
+        const fields = [
+
+            { label: 'Status', value: properties.status },
+
+            //Traffic
+            { label: 'From Road', value: properties.from_road },
+            { label: 'To Road', value: properties.to_road },
+            { label: 'Description of Works', value: properties.description_of_works },
+            { label: 'Road Work Start Date', value: formatDate(properties.road_work_start_date) },
+            { label: 'Road Work End Date', value: formatDate(properties.road_work_end_date) },
+            { label: 'Traffic Impact', value: properties.traffic_impact },
+            { label: 'Road Work Type', value: properties.road_work_type },
+            { label: 'Expected Delay', value: properties.expected_delay },
+            { label: 'Application Company', value: properties.application_company },
+            { label: 'Applicant Contact', value: properties.applicant_contact_ },
+            { label: 'Applicant Contact Number', value: properties.applicant_contact_number },
+            { label: 'Application Type', value: properties.application_type },
+            { label: 'Authorisation Officer', value: properties.authorisation_officer },
+            { label: 'Council Project', value: properties.council_project },
+            { label: 'Council Project Manager', value: properties.council_project_manager },
+            { label: 'Project Manager Email', value: properties.project_manager_email },
+            { label: 'Project Manager Phone Number', value: properties.project_manager_phone_number },
+            { label: 'Site Supervisor', value: properties.site_supervisor },
+            { label: 'Site Supervisor Contact', value: properties.site_supervisor_contact },
+            { label: 'Site Visit Required', value: properties.site_visit_required },
+            { label: 'VMS Required', value: properties.vms_required },
+            { label: 'Origin of Project', value: properties.origin_of_project },
+
+            //Subdivisions
+            { label: 'Stage ID', value: properties.stage_id },
+            { label: 'Consultant', value: properties.consultant },
+            { label: 'Consultant', value: properties.consultant_other },
+            { label: 'Developers', value: properties.developers },
+            { label: 'Developers', value: properties.developers_other },
+            { label: 'Planning Permit Reference', value: properties.planning_ppermit_reference },
+            { label: 'Contractor', value: properties.contractor },
+            { label: 'Contractor', value: properties.contractor_other },
+            { label: 'MCC Supervisor', value: properties.mcc_supervisor },
+            { label: 'Pre-commencement Date', value: formatDate(properties.date_pre_comm) },
+            { label: 'Environmental Protection Date', value: formatDate(properties.date_emp) },
+            { label: 'Bulk Earthworks Date', value: formatDate(properties.date_bulkearthworks) },
+            { label: 'Foundation Bedding Date', value: formatDate(properties.date_foundation_beding) },
+            { label: 'Drainage Date', value: formatDate(properties.date_drainage) },
+            //ETC complete other relevant details as needed
+
+            //PSP Roads
+            { label: 'Precint Structure Plan', value: properties.precinct_structure_plan },
+            { label: 'Road Category', value: properties.road_category },
+            { label: 'Road Status', value: properties._road_status },
+            { label: 'No of Lanes', value: properties.lanes },
+            { label: 'Bus capable road', value: properties.bus_capable_road },
+
+            //Infrastructure Planning/Assets
+            { label: 'Public Name', value: properties.public_name },
+            { label: 'Project or Program Start Year', value: properties.project_or_program_start_year },
+            { label: 'Project Decription', value: properties.project_description },
+            { label: 'Public Decription', value: properties.public_description },
+            { label: 'Asset Expenditure Type', value: properties.asset_expenditure_type },
+            { label: 'Project Delivery Agent', value: properties.project_delivery_agent },
+            { label: 'Project Manager', value: properties.project_manager },
+            { label: 'Capital Project Manager', value: properties.capital_project_manager },
+            { label: 'Project Type', value: properties.project_type },
+            { label: 'Updates', value: properties.updates },
+            { label: 'Project Completed', value: properties.project_completed },
+            { label: 'Project Progress', value: properties.project_progress },
+            { label: 'Comments', value: properties.comments }
+            //ETC complete other relevant details as needed
+        ];
+
+        // Hide empty and N/A fields
+        fields.forEach(field => {
+            if (field.value && field.value !== 'N/A') {
+                modalContent += `<p><strong>${field.label}:</strong> ${field.value}</p>`;
+            }
+        });
+
+        // Set the modal body content
+        document.getElementById('modal-body').innerHTML = modalContent;
+        document.getElementById('modal').style.display = 'block';
+    });
+});
+
+// Close modal on x click
+document.querySelector('.close-button').onclick = function() {
+    document.getElementById('modal').style.display = 'none';
+};
+
+// Close the modal when the user clicks anywhere outside of the modal
+window.onclick = function(event) {
+    const modal = document.getElementById('modal');
+    if (event.target === modal) {
+        modal.style.display = 'none';
+    }
+};
+        });
+
+}
+
+    </script>
+</body>
+</html>
