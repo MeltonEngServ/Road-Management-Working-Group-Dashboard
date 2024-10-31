@@ -207,7 +207,7 @@
         mapboxgl.accessToken = 'pk.eyJ1Ijoiam9obnN0b253IiwiYSI6ImNtMmIxNDRuZzBueGkycm9teG5mcXNqeWEifQ.98yyaDXx0p9HVr3nuNibrA';
         const map = new mapboxgl.Map({
             container: 'map',
-            style: 'mapbox://styles/mapbox/streets-v11',
+            style: 'mapbox://styles/mapbox/light-v11',
             center: [144.646838,-37.712344],
             zoom: 11
         });
@@ -292,7 +292,7 @@ function selectSuggestion(feature) {
 
     map.flyTo({
         center: coordinates,
-        zoom: 15
+        zoom: 16
     });
     // Clear input
     addressInput.value = '';
