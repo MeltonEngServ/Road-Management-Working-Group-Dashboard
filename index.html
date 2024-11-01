@@ -546,15 +546,15 @@ slider.addEventListener('input', function() {
 // Initialize map
 map.on('load', function () {
     const today = new Date();
-    const sixMonthsPast = new Date();
-    sixMonthsPast.setMonth(today.getMonth() - 6);
+    const dateFilterStart = new Date();
+    dateFilterStart.setMonth(today.getMonth() - 12);
 
-    const sixtyMonthsFuture = new Date();
-    sixtyMonthsFuture.setMonth(today.getMonth() + 60);
+    const dateFilterEnd = new Date();
+    dateFilterEnd.setMonth(today.getMonth() + 120);
 
     // Update slider attributes
-    slider.min = sixMonthsPast.getTime();
-    slider.max = sixtyMonthsFuture.getTime();
+    slider.min = dateFilterStart.getTime();
+    slider.max = dateFilterEnd.getTime();
     slider.value = today.getTime();
     dateInput.value = today.toISOString().slice(0, 10);
 
