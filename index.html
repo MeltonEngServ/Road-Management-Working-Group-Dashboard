@@ -204,25 +204,65 @@
     </div>
     
     <script>
-        mapboxgl.accessToken = 'pk.eyJ1Ijoiam9obnN0b253IiwiYSI6ImNtMmIxNDRuZzBueGkycm9teG5mcXNqeWEifQ.98yyaDXx0p9HVr3nuNibrA';
-        const map = new mapboxgl.Map({
-            container: 'map',
-            style: 'mapbox://styles/mapbox/light-v11',
-            center: [144.646838,-37.712344],
-            zoom: 11
-        });
-    
-        const tooltip = document.getElementById('tooltip');
-        const dateInput = document.getElementById('dateInput');
-        const slider = document.getElementById('slider');
-        const visibilityStates = {};
-    
-        document.querySelectorAll('.legend-key').forEach(item => {
-            const layerId = item.getAttribute('data-layer');
-            visibilityStates[layerId] = true; 
-        });
-    
 
+
+// Define the Nearmap aerial layer
+const nearMapAerialLayer = {
+  id: 'Nearmap_Layer',
+  source: 'Nearmap_Source',
+  type: 'raster',
+  paint: {
+    'raster-opacity': ['interpolate', ['exponential', 1.5], ['zoom'], 15, 0, 17, 1],
+  },
+  layout: {
+    visibility: 'none',
+  },
+};
+
+// Set up the Mapbox map
+mapboxgl.accessToken = 'pk.eyJ1Ijoiam9obnN0b253IiwiYSI6ImNtMmIxNDRuZzBueGkycm9teG5mcXNqeWEifQ.98yyaDXx0p9HVr3nuNibrA';
+const map = new mapboxgl.Map({
+  container: 'map',
+  style: 'mapbox://styles/mapbox/light-v11', // Initial (Greyscale)
+  center: [144.646838, -37.712344],
+  zoom: 11,
+});
+
+map.on('load', () => {
+  // Add Nearmap source
+  map.addSource('Nearmap_Source', {
+    type: 'raster',
+    tiles: ['https://api.nearmap.com/tiles/v3/Vert/{z}/{x}/{y}.png?apikey=Nzk2YzY3MjQtYzBjOS00YmU0LTgyZjUtZDUzNTNmZDgzMTFi'],
+    bounds: [144.4667201638995, -37.81836486637397, 144.78127999196013, -37.54203040304009],
+  });
+
+  map.addLayer(nearMapAerialLayer);
+
+  const currentZoom = map.getZoom();
+  // Zoom listener
+    map.on('zoom', () => {
+        const currentZoom = map.getZoom();
+
+        if (currentZoom >= 16) {
+            map.setLayoutProperty('Nearmap_Layer', 'visibility', 'visible');
+        } else {
+            map.setLayoutProperty('Nearmap_Layer', 'visibility', 'none');
+        }
+    });
+
+});
+
+    
+const tooltip = document.getElementById('tooltip');
+const dateInput = document.getElementById('dateInput');
+const slider = document.getElementById('slider');
+const visibilityStates = {};
+
+document.querySelectorAll('.legend-key').forEach(item => {
+    const layerId = item.getAttribute('data-layer');
+    visibilityStates[layerId] = true; 
+});
+    
 
 // Add nav controls to the map
 map.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
