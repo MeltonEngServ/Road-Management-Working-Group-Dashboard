@@ -226,6 +226,14 @@ const map = new mapboxgl.Map({
   style: 'mapbox://styles/mapbox/light-v11', // Initial (Greyscale)
   center: [144.646838, -37.712344],
   zoom: 11,
+  transformRequest:
+    (url, resourceType) => {
+        if (resourceType === "Tile") {
+            return { url, referrerPolicy: "origin" };
+        } else {
+            return { url };
+        }
+    }
 });
 
 map.on('load', () => {
