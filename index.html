@@ -196,6 +196,10 @@
         <div class="legend-color" style="background-color: #dd9000;"></div>
         <span>Transport</span>
     </div>
+    <div class="legend-key" data-layer="RIGARUS">
+        <div class="legend-color" style="background-color: #cb0d0c;"></div>
+        <span>RIGARUS</span>
+    </div>
 </div>
     
     <div id="dateFilter">
@@ -635,12 +639,19 @@ map.on('load', function () {
             addGeoJsonData('https://web.fulcrumapp.com/shares/bb8aae5257d194f5.geojson', 'PSP Road Cross Sections');   //PSP Road Cross Sections
         });
 
-     fetch('https://web.fulcrumapp.com/shares/c84039d55fcd0f7c.geojson')
+    fetch('https://web.fulcrumapp.com/shares/c84039d55fcd0f7c.geojson')
          .then(response => response.json())
          .then(data => {
              window.originalIPAssets = data; 
              addGeoJsonData('https://web.fulcrumapp.com/shares/c84039d55fcd0f7c.geojson', 'Infrastructure Planning/Assets');  //Infrastructure Planning/Assets
-         });
+        });
+
+    fetch('https://web.fulcrumapp.com/shares/0f0da1c8702f0aa6.geojson')
+         .then(response => response.json())
+         .then(data => {
+             window.originalRIGARUS = data; 
+             addGeoJsonData('https://web.fulcrumapp.com/shares/0f0da1c8702f0aa6.geojson', 'RIGARUS');  //RIGARUS
+        });
 
 
     const icons = {
@@ -723,6 +734,8 @@ map.addLayer({
             //Infrastructure Planning/Assets
             ['==', ['get', 'status'], 'Land'], '#00bf86',
             ['==', ['get', 'status'], 'Transport'], '#dd9000',
+            //RIGARUS
+            ['==', ['get', 'status'], 'RIGARUS'], '#cb0d0c',
             '#888888'
         ],
         // Control opacity based on icon availability
@@ -766,6 +779,8 @@ map.addLayer({
             //Infrastructure Planning/Assets
             ['==', ['get', 'status'], 'Land'], '#00bf86',
             ['==', ['get', 'status'], 'Transport'], '#dd9000',
+            //RIGARUS
+            ['==', ['get', 'status'], 'RIGARUS'], '#cb0d0c',
             '#888888'
         ]
     }
@@ -800,6 +815,8 @@ map.addLayer({
             //Infrastructure Planning/Assets
             ['==', ['get', 'status'], 'Land'], '#00bf86',
             ['==', ['get', 'status'], 'Transport'], '#dd9000',
+            //RIGARUS
+            ['==', ['get', 'status'], 'RIGARUS'], '#cb0d0c',
             '#888888'
         ],
         'fill-opacity': 0.5
@@ -887,6 +904,9 @@ layers.forEach(layer => {
             { label: 'Project Name', value: properties.project_name },
                 { label: 'Status', value: properties.status },
             { label: 'Road Category', value: properties.road_category },
+            { label: 'Category', value: properties.category },
+            { label: 'Condition', value: properties.condition },
+            { label: 'Project', value: properties.project },
             { label: 'Project or Program Start Year', value: properties.project_or_program_start_year },
             { label: 'Project Progress', value: properties.project_progress },
             { label: 'Project Updates', value: properties.updates }
@@ -949,7 +969,7 @@ layers.forEach(layer => {
         console.log(properties)
 
         let modalContent = `<h3>${
-                                //Traffic
+                                //Traffic and RIGARUS
                                 properties.road || 
                                 //Subdivision Construction
                                 properties.estate_name || 
@@ -1026,8 +1046,19 @@ layers.forEach(layer => {
             { label: 'Updates', value: properties.updates },
             { label: 'Project Completed', value: properties.project_completed },
             { label: 'Project Progress', value: properties.project_progress },
-            { label: 'Comments', value: properties.comments }
+            { label: 'Comments', value: properties.comments },
             //ETC complete other relevant details as needed
+
+            //RIGARUS
+            { label: 'Suburb', value: properties.suburb },
+            { label: 'Category', value: properties.category },
+            { label: 'Condition', value: properties.condition },
+            { label: 'Length', value: properties.length },
+            { label: 'Volume', value: properties.volume },
+            { label: 'Project', value: properties.project },
+            { label: 'Project No.', value: properties.project_no },
+            { label: 'Financial Year', value: properties.fy },
+            { label: 'Comments', value: properties.comments }
         ];
 
         // Hide empty and N/A fields
