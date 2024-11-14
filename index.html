@@ -231,15 +231,12 @@ const map = new mapboxgl.Map({
   center: [144.646838, -37.712344],
   zoom: 11,
   transformRequest: (url, resourceType) => {
-        if (resourceType == 'Tile') {
           return {
             url,
             headers: {
-              Referer: 'https://happy-sand-0e8538600.5.azurestaticapps.net/',
+              'Referer': 'https://happy-sand-0e8538600.5.azurestaticapps.net/',
             },
           }
-        }
-        return { url }
       },
 });
 
