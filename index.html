@@ -231,13 +231,19 @@ const map = new mapboxgl.Map({
   center: [144.646838, -37.712344],
   zoom: 11,
   transformRequest: (url, resourceType) => {
-          return {
-            url,
-            headers: {
-              'Referer': 'https://happy-sand-0e8538600.5.azurestaticapps.net/',
-            },
-          }
-      },
+    // Add proper CORS headers for Nearmap tiles
+    if (url.includes('api.nearmap.com')) {
+      console.log("fetching nearmap tiles")
+      return {
+        url: url,
+        headers: {
+          'Referer': 'https://happy-sand-0e8538600.5.azurestaticapps.net/',
+          'Origin': 'https://happy-sand-0e8538600.5.azurestaticapps.net/'
+        },
+        credentials: 'include'
+      };
+    }
+  }
 });
 
 map.on('load', () => {
