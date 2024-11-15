@@ -219,7 +219,7 @@ const nearMapAerialLayer = {
     'raster-opacity': ['interpolate', ['exponential', 1.5], ['zoom'], 15, 0, 17, 1],
   },
   layout: {
-    visibility: 'none',
+    visibility: 'visible',
   },
 };
 
@@ -230,17 +230,6 @@ const map = new mapboxgl.Map({
   style: 'mapbox://styles/mapbox/light-v11', // Initial (Greyscale)
   center: [144.646838, -37.712344],
   zoom: 11,
-  transformRequest: (url, resourceType) => {
-    // Add proper CORS headers for Nearmap tiles
-    if (url.includes('api.nearmap.com')) {
-      console.log("fetching nearmap tiles")
-      return {
-        url: url,
-        "referrerPolicy": "origin"
-      };
-    }
-    return { url };
-  }
 });
 
 map.on('load', () => {
@@ -248,23 +237,12 @@ map.on('load', () => {
   map.addSource('Nearmap_Source', {
     type: 'raster',
     tiles: ['https://api.nearmap.com/tiles/v3/Vert/{z}/{x}/{y}.png?apikey=Nzk2YzY3MjQtYzBjOS00YmU0LTgyZjUtZDUzNTNmZDgzMTFi'],
+    minzoom: 16,
+    maxzoom: 22,
     bounds: [144.4667201638995, -37.81836486637397, 144.78127999196013, -37.54203040304009],
   });
 
   map.addLayer(nearMapAerialLayer);
-
-  const currentZoom = map.getZoom();
-  // Zoom listener
-    map.on('zoom', () => {
-        const currentZoom = map.getZoom();
-
-        if (currentZoom >= 16) {
-            map.setLayoutProperty('Nearmap_Layer', 'visibility', 'visible');
-        } else {
-            map.setLayoutProperty('Nearmap_Layer', 'visibility', 'none');
-        }
-    });
-
 });
 
     
