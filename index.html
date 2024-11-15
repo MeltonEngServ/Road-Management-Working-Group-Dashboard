@@ -236,10 +236,7 @@ const map = new mapboxgl.Map({
       console.log("fetching nearmap tiles")
       return {
         url: url,
-        headers: {
-          'Referer': 'https://happy-sand-0e8538600.5.azurestaticapps.net/',
-          'Origin': 'https://happy-sand-0e8538600.5.azurestaticapps.net/'
-        }
+        "referrerPolicy": "origin"
       };
     }
   }
