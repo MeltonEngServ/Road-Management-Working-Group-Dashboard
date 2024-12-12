@@ -219,7 +219,7 @@ const nearMapAerialLayer = {
     'raster-opacity': ['interpolate', ['exponential', 1.5], ['zoom'], 15, 0, 17, 1],
   },
   layout: {
-    visibility: 'none',
+    visibility: 'visible',
   },
 };
 
@@ -231,37 +231,29 @@ const map = new mapboxgl.Map({
   center: [144.646838, -37.712344],
   zoom: 11,
   transformRequest: (url, resourceType) => {
-          return {
-            url,
-            headers: {
-              'Referer': 'https://happy-sand-0e8538600.5.azurestaticapps.net/',
-            },
-          }
-      },
+    if (
+      resourceType === "Tile" &&
+      url.indexOf("https://api.nearmap.com") > -1
+    ) {
+      console.log(url);
+      return { url, referrerPolicy: "origin" };
+    } else {
+      return { url };
+    }
+  },
 });
 
 map.on('load', () => {
   // Add Nearmap source
   map.addSource('Nearmap_Source', {
     type: 'raster',
-    tiles: ['https://api.nearmap.com/tiles/v3/Vert/{z}/{x}/{y}.png?apikey=Nzk2YzY3MjQtYzBjOS00YmU0LTgyZjUtZDUzNTNmZDgzMTFi'],
+    tiles: ['https://api.nearmap.com/tiles/v3/Vert/{z}/{x}/{y}.png?apikey=OWU2NDA3ZjktNzNiNi00YTFmLThkZDgtZGRhZjhlODFjM2Yw'],
+    minzoom: 16,
+    maxzoom: 22,
     bounds: [144.4667201638995, -37.81836486637397, 144.78127999196013, -37.54203040304009],
   });
 
   map.addLayer(nearMapAerialLayer);
-
-  const currentZoom = map.getZoom();
-  // Zoom listener
-    map.on('zoom', () => {
-        const currentZoom = map.getZoom();
-
-        if (currentZoom >= 16) {
-            map.setLayoutProperty('Nearmap_Layer', 'visibility', 'visible');
-        } else {
-            map.setLayoutProperty('Nearmap_Layer', 'visibility', 'none');
-        }
-    });
-
 });
 
     
