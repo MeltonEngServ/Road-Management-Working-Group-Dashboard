@@ -529,7 +529,33 @@ function filterDataIPAssets() {
 
 
 // Need to add filter for RIGARUS but data needs to be cleaned, ask Michael to set a date instead of "31/32 and future" or "34/35?"
+// Function to filter RIGARUS data
+function filterDataRIGARUS() {
+    const geojsonData = window.originalRIGARUS;
 
+    // Define the allowed statuses
+    const allowedStatuses = [
+        'RIGARUS'
+    ];
+
+    const filteredFeatures = geojsonData.features.filter(feature => {
+        const status = feature.properties.status ? feature.properties.status.trim() : ''; // Ensure trimming
+
+        // Check if the feature's status is in allowedStatuses and visibleStatuses
+        const isAllowedStatus = allowedStatuses.includes(status);
+        const isVisibleStatus = visibleStatuses.length === 0 || visibleStatuses.includes(status);
+
+        // Return features only if they match the allowed and visible statuses
+        return isAllowedStatus && isVisibleStatus;
+    });
+
+    const filteredGeoJson = {
+        type: 'FeatureCollection',
+        features: filteredFeatures
+    };
+
+    map.getSource('RIGARUS').setData(filteredGeoJson);
+}
 
 // Event listener to legend items
 document.querySelectorAll('.legend-key').forEach(item => {
@@ -564,6 +590,7 @@ document.querySelectorAll('.legend-key').forEach(item => {
         filterDataCHP();
         filterDataPSP();
         filterDataIPAssets();
+        filterDataRIGARUS();
     });
 });
 
