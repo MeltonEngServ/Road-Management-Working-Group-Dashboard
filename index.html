@@ -12,8 +12,7 @@
     <div class="tooltip" id="tooltip"></div>
     <div id="searchBar">
         <input type="text" id="address" placeholder="Enter an address" autocomplete="off" />
-        <button id="searchBtn">Search</button>
-        <div id="suggestions" style="position: absolute; background: white; border: 1px solid #ccc; z-index: 10; display: none;"></div>
+        <div id="suggestions" style="position: absolute; background: white; border: 1px solid #ccc; z-index: 1; display: none;"></div>
     </div>
 
     <div id="modal" class="modal">
@@ -53,11 +52,19 @@
             position: absolute;
             top: 10px;
             left: 10px;
+            width: 200px;
             background-color: white;
             padding: 10px;
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
             z-index: 1;
+        }
+        #address {
+            width: 95%;
+            padding: 4px;
+            font-size: 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
         }
         #dateFilter {
             position: absolute;
