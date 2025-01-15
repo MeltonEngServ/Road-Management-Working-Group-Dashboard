@@ -30,24 +30,68 @@
         }
         #legend {
             position: absolute;
-            bottom: 60px;
+            bottom: 115px;
             left: 10px;
             background-color: white;
             padding: 10px;
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            user-select: none;
         }
+
+        .legend-category {
+            margin-bottom: 15px;
+        }
+
+        .category-title {
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            color: #333;
+            padding: 5px;
+            background-color: #f1f1f1;
+            border-radius: 5px;
+            margin-bottom: 55px;
+            text-align: left;
+            width: 100%;
+        }
+
+        .legend-group {
+            display: none;
+            margin-left: 15px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
         .legend-key {
             display: flex;
             align-items: center;
             margin-bottom: 5px;
             cursor: pointer;
         }
+
+        .legend-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+
         .legend-color {
             width: 20px;
             height: 20px;
             margin-right: 10px;
         }
+
+        /* Hover effect for category title */
+        .category-title:hover {
+            background-color: #e0e0e0;
+        }
+
+        /* Make the group visible when the category is clicked */
+        .legend-category.open .legend-group {
+            display: block;
+        }
+
         #searchBar {
             position: absolute;
             top: 10px;
@@ -74,6 +118,26 @@
             padding: 10px;
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 200px;
+        }
+
+        #dateInput,
+        #slider {
+            width: 100%;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center; 
+            gap: 5px; 
+            width: 100%; 
+        }
+
+        #activeProjectsToggle {
+            margin: 0; 
         }
 
         .modal {
@@ -129,90 +193,113 @@
             }
         }
         
-        #legend {
-            user-select: none; 
-        }
 
-        .legend-key {
-            cursor: pointer;
-        }
         </style>
 
 <div id="legend">
-    <div class="legend-key" data-layer="Road Closed">
-        <img class="legend-icon" src="https://raw.githubusercontent.com/MeltonEngServ/Traffic-Management-Plans-Registry/refs/heads/main/assets/road-closed-icon.png" alt="Road Closed Icon" style="width: 25px; height: 25px; margin-right: 5px;">
-        <span>Road Closed</span>
+    <div class="legend-category">
+        <span class="category-title">Traffic</span>
+        <div class="legend-group">
+            <div class="legend-key" data-layer="Road Closed">
+                <img class="legend-icon" src="https://raw.githubusercontent.com/MeltonEngServ/Traffic-Management-Plans-Registry/refs/heads/main/assets/road-closed-icon.png" alt="Road Closed Icon" style="width: 25px; height: 25px; margin-right: 5px;">
+                <span>Road Closed</span>
+            </div>
+            <div class="legend-key" data-layer="Lane Closure">
+                <img class="legend-icon" src="https://raw.githubusercontent.com/MeltonEngServ/Traffic-Management-Plans-Registry/refs/heads/main/assets/lane-closure-icon.png" alt="Lane Closure Icon" style="width: 25px; height: 25px; margin-right: 5px;">
+                <span>Lane Closure</span>
+            </div>
+            <div class="legend-key" data-layer="Temporary Traffic Signals">
+                <div class="legend-color" style="background-color: #294184;"></div>
+                <span>Temporary Traffic Signals</span>
+            </div>
+            <div class="legend-key" data-layer="Truck Site Access">
+                <img class="legend-icon" src="https://raw.githubusercontent.com/MeltonEngServ/Traffic-Management-Plans-Registry/refs/heads/main/assets/truck-site-access-icon.png" alt="Truck Site Access Icon" style="width: 25px; height: 25px; margin-right: 5px;">
+                <span>Truck Site Access</span>
+            </div>
+            <div class="legend-key" data-layer="No Traffic Impacts">
+                <div class="legend-color" style="background-color: #87d30f;"></div>
+                <span>No Traffic Impacts</span>
+            </div>
+            <div class="legend-key" data-layer="Not Defined">
+                <div class="legend-color" style="background-color: #cf04b4;"></div>
+                <span>Traffic Impact Not Defined</span>
+            </div>
+        </div>
     </div>
-    <div class="legend-key" data-layer="Lane Closure">
-        <img class="legend-icon" src="https://raw.githubusercontent.com/MeltonEngServ/Traffic-Management-Plans-Registry/refs/heads/main/assets/lane-closure-icon.png" alt="Lane Closure Icon" style="width: 25px; height: 25px; margin-right: 5px;">
-        <span>Lane Closure</span>
+
+    <div class="legend-category">
+        <span class="category-title">Subdivision Works</span>
+        <div class="legend-group">
+            <div class="legend-key" data-layer="Upcoming">
+                <div class="legend-color" style="background-color: #f711ff;"></div>
+                <span>Upcoming Subdivision Works</span>
+            </div>
+            <div class="legend-key" data-layer="In construction">
+                <div class="legend-color" style="background-color: #ff9011;"></div>
+                <span>Subdivision Works In Construction</span>
+            </div>
+            <div class="legend-key" data-layer="Landscape In Construction">
+                <div class="legend-color" style="background-color: #ff9011;"></div>
+                <span>Landscape In Construction</span>
+            </div>
+            <div class="legend-key" data-layer="Bulk earth & sewer">
+                <div class="legend-color" style="background-color: #a37002;"></div>
+                <span>Bulk earth & sewer</span>
+            </div>
+        </div>
     </div>
-    <div class="legend-key" data-layer="Temporary Traffic Signals">
-        <div class="legend-color" style="background-color: #294184;"></div>
-        <span>Temporary Traffic Signals</span>
+
+    <div class="legend-category">
+        <span class="category-title">Strategic Planning</span>
+        <div class="legend-group">
+            <div class="legend-key" data-layer="Primary Arterial">
+                <div class="legend-color" style="background-color: #ed4e4e;"></div>
+                <span>Primary Arterial</span>
+            </div>
+            <div class="legend-key" data-layer="Secondary Arterial">
+                <div class="legend-color" style="background-color: #ff983e;"></div>
+                <span>Secondary Arterial</span>
+            </div>
+            <div class="legend-key" data-layer="Connector">
+                <div class="legend-color" style="background-color: #ffe46b;"></div>
+                <span>Connector Road</span>
+            </div>
+            <div class="legend-key" data-layer="Local">
+                <div class="legend-color" style="background-color: #76bf00;"></div>
+                <span>Local Road</span>
+            </div>
+            <div class="legend-key" data-layer="RIGARUS">
+                <div class="legend-color" style="background-color: #cb0d0c;"></div>
+                <span>RIGARUS</span>
+            </div>
+        </div>
     </div>
-    <div class="legend-key" data-layer="Truck Site Access">
-        <img class="legend-icon" src="https://raw.githubusercontent.com/MeltonEngServ/Traffic-Management-Plans-Registry/refs/heads/main/assets/truck-site-access-icon.png" alt="Truck Site Access Icon" style="width: 25px; height: 25px; margin-right: 5px;">
-        <span>Truck Site Access</span>
-    </div>
-    <div class="legend-key" data-layer="No Traffic Impacts">
-        <div class="legend-color" style="background-color: #87d30f;"></div>
-        <span>No Traffic Impacts</span>
-    </div>
-    <div class="legend-key" data-layer="Not Defined">
-        <div class="legend-color" style="background-color: #cf04b4;"></div>
-        <span>Traffic Impact Not Defined</span>
-    </div>
-    <div class="legend-key" data-layer="Upcoming">
-        <div class="legend-color" style="background-color: #f711ff;"></div>
-        <span>Upcoming Subdivision Works</span>
-    </div>
-    <div class="legend-key" data-layer="In construction">
-        <div class="legend-color" style="background-color: #ff9011;"></div>
-        <span>Subdivision Works In Construction</span>
-    </div>
-    <div class="legend-key" data-layer="Landscape In Construction">
-        <div class="legend-color" style="background-color: #ff9011;"></div>
-        <span>Landscape In Construction</span>
-    </div>
-    <div class="legend-key" data-layer="Bulk earth & sewer">
-        <div class="legend-color" style="background-color: #a37002;"></div>
-        <span>Bulk earth & sewer</span>
-    </div>
-    <div class="legend-key" data-layer="Primary Arterial">
-        <div class="legend-color" style="background-color: #ed4e4e;"></div>
-        <span>Primary Arterial</span>
-    </div>
-    <div class="legend-key" data-layer="Secondary Arterial">
-        <div class="legend-color" style="background-color: #ff983e;"></div>
-        <span>Secondary Arterial</span>
-    </div>
-    <div class="legend-key" data-layer="Connector">
-        <div class="legend-color" style="background-color: #ffe46b;"></div>
-        <span>Connector Road</span>
-    </div>
-    <div class="legend-key" data-layer="Local">
-        <div class="legend-color" style="background-color: #76bf00;"></div>
-        <span>Local Road</span>
-    </div>
-    <div class="legend-key" data-layer="Land">
-        <div class="legend-color" style="background-color: #00bf86;"></div>
-        <span>Land</span>
-    </div>
-    <div class="legend-key" data-layer="Transport">
-        <div class="legend-color" style="background-color: #dd9000;"></div>
-        <span>Transport</span>
-    </div>
-    <div class="legend-key" data-layer="RIGARUS">
-        <div class="legend-color" style="background-color: #cb0d0c;"></div>
-        <span>RIGARUS</span>
+
+    <div class="legend-category">
+        <span class="category-title">Infrastructure Planning</span>
+        <div class="legend-group">
+            <div class="legend-key" data-layer="Land">
+                <div class="legend-color" style="background-color: #00bf86;"></div>
+                <span>Land</span>
+            </div>
+            <div class="legend-key" data-layer="Transport">
+                <div class="legend-color" style="background-color: #dd9000;"></div>
+                <span>Transport</span>
+            </div>
+        </div>
     </div>
 </div>
+
     
     <div id="dateFilter">
         <input type="date" id="dateInput" />
         <input type="range" id="slider" min="0" max="100" />
+        <label for="activeProjectsToggle">
+            <input type="checkbox" id="activeProjectsToggle" /> Show Only Active Projects
+        </label>
     </div>
+    
+
     
     <script>
 
@@ -451,7 +538,7 @@ function filterDataCHP() {
 
 // Function to filter PSP road data
 function filterDataPSP() {
-    const geojsonData = window.originalPSP; 
+    const geojsonData = window.originalPSP;
 
     // Define the allowed statuses
     const allowedStatuses = [
@@ -460,6 +547,8 @@ function filterDataPSP() {
         'Primary Arterial',
         'Secondary Arterial'
     ];
+
+    const toggleActiveOnly = document.getElementById('activeProjectsToggle').checked;
 
     const filteredFeatures = geojsonData.features.filter(feature => {
         const roadStatus = feature.properties._road_status ? feature.properties._road_status.trim() : '';
@@ -472,8 +561,11 @@ function filterDataPSP() {
         const isAllowedStatus = allowedStatuses.includes(status);
         const isVisibleStatus = visibleStatuses.length === 0 || visibleStatuses.includes(status);
 
-        // Return only records that are visible
-        return isProposed && isVisibleStatus;
+        // Corrected active check: if the checkbox is toggled, hide everything
+        const isActive = toggleActiveOnly ? false : true; // Hides everything if checkbox is checked
+
+        // Return only records that are visible and active (if toggle is off)
+        return isActive && isAllowedStatus && isVisibleStatus;
     });
 
     const filteredGeoJson = {
@@ -482,7 +574,6 @@ function filterDataPSP() {
     };
 
     map.getSource('PSP Road Cross Sections').setData(filteredGeoJson);
-    
 }
 
 
@@ -492,19 +583,18 @@ function filterDataIPAssets() {
     const selectedDate = new Date(dateInput.value);
     selectedDate.setHours(0, 0, 0, 0);
 
-    // Define the allowed statuses
-    const allowedStatuses = [
-        'Land',
-        'Transport'
-    ];
+    const toggleActiveOnly = document.getElementById('activeProjectsToggle').checked;
 
     const filteredFeatures = geojsonData.features.filter(feature => {
         const status = feature.properties.status;
-        const projectStartStr = feature.properties.project_or_program_start_year ? feature.properties.project_or_program_start_year.trim() : null;
+        const projectStartStr = feature.properties.project_or_program_start_year
+            ? feature.properties.project_or_program_start_year.trim()
+            : null;
 
         let projectStartDate = null;
+
+        // Parse the start date
         if (projectStartStr && projectStartStr.match(/^\d{2}\/\d{2}$/)) {
-            // Parse "YY/YY" format
             const yearSuffix = projectStartStr.split('/')[1];
             const year = `20${yearSuffix}`;
             projectStartDate = new Date(`July 1, ${year}`);
@@ -513,17 +603,24 @@ function filterDataIPAssets() {
             projectStartDate = new Date(`July 1, ${year}`);
         }
 
-        // Check if the project start date has not passed
-        const hasProjectStartDateNotPassed = projectStartDate && selectedDate < projectStartDate;
+        // Skip features with no valid start date
+        if (!projectStartDate) {
+            return false;
+        }
 
-        // Determine if the feature's status is in allowedStatuses and in visibleStatuses
-        const isAllowedStatus = allowedStatuses.includes(status);
+        // Check if the project is committed and if it should be hidden when active projects are toggled
+        const isCommitted = feature.properties.committed;
+        const isActive = toggleActiveOnly
+            ? projectStartDate <= selectedDate && isCommitted !== "FALSE" // Hide if committed is "FALSE" when active only is toggled
+            : true;
+
+        // Check if status is allowed and visible
+        const isAllowedStatus = ['Land', 'Transport'].includes(status);
         const isVisibleStatus = visibleStatuses.length === 0 || visibleStatuses.includes(status);
 
-        // Only include features with future start dates or no start date at all
-        const shouldIncludeFeature = isAllowedStatus && isVisibleStatus && (hasProjectStartDateNotPassed || projectStartDate === null);
-
-        return shouldIncludeFeature;
+        // Include only if all conditions are met
+        const includeFeature = isActive && isAllowedStatus && isVisibleStatus;
+        return includeFeature;
     });
 
     const filteredGeoJson = {
@@ -531,7 +628,11 @@ function filterDataIPAssets() {
         features: filteredFeatures
     };
 
-    map.getSource('Infrastructure Planning/Assets').setData(filteredGeoJson);
+    if (map.getSource('Infrastructure Planning/Assets')) {
+        map.getSource('Infrastructure Planning/Assets').setData(filteredGeoJson);
+    } else {
+        console.error("Source 'Infrastructure Planning/Assets' not found");
+    }
 }
 
 
@@ -546,14 +647,18 @@ function filterDataRIGARUS() {
     ];
 
     const filteredFeatures = geojsonData.features.filter(feature => {
-        const status = feature.properties.status ? feature.properties.status.trim() : ''; // Ensure trimming
+    const status = feature.properties.status ? feature.properties.status.trim() : ''; // Ensure trimming
+    const toggleActiveOnly = document.getElementById('activeProjectsToggle').checked;
 
         // Check if the feature's status is in allowedStatuses and visibleStatuses
         const isAllowedStatus = allowedStatuses.includes(status);
         const isVisibleStatus = visibleStatuses.length === 0 || visibleStatuses.includes(status);
 
+        // Corrected active check: if the checkbox is toggled, hide everything
+        const isActive = toggleActiveOnly ? false : true; // Hides everything if checkbox is checked
+
         // Return features only if they match the allowed and visible statuses
-        return isAllowedStatus && isVisibleStatus;
+        return isActive && isAllowedStatus && isVisibleStatus;
     });
 
     const filteredGeoJson = {
@@ -563,6 +668,15 @@ function filterDataRIGARUS() {
 
     map.getSource('RIGARUS').setData(filteredGeoJson);
 }
+
+
+// Toggle visibility of legend categories when the category title is clicked
+document.querySelectorAll('.category-title').forEach(title => {
+    title.addEventListener('click', () => {
+        const parentCategory = title.parentElement;
+        parentCategory.classList.toggle('open');
+    });
+});
 
 // Event listener to legend items
 document.querySelectorAll('.legend-key').forEach(item => {
@@ -620,6 +734,15 @@ slider.addEventListener('input', function() {
     filterDataIPAssets();
 });
 
+// Event listener for active projects checkbox
+document.getElementById('activeProjectsToggle').addEventListener('change', () => {
+    // Reapply all filters when the toggle changes
+    filterDataTMP();
+    filterDataCHP();
+    filterDataPSP();
+    filterDataIPAssets();
+    filterDataRIGARUS();
+});
 
 // Initialize map
 map.on('load', function () {
@@ -666,11 +789,11 @@ map.on('load', function () {
             addGeoJsonData('https://web.fulcrumapp.com/shares/bb8aae5257d194f5.geojson', 'PSP Road Cross Sections');   //PSP Road Cross Sections
         });
 
-    fetch('https://web.fulcrumapp.com/shares/c84039d55fcd0f7c.geojson')
+    fetch('https://web.fulcrumapp.com/shares/25ec4d81d620c4c7.geojson')
          .then(response => response.json())
          .then(data => {
              window.originalIPAssets = data; 
-             addGeoJsonData('https://web.fulcrumapp.com/shares/c84039d55fcd0f7c.geojson', 'Infrastructure Planning/Assets');  //Infrastructure Planning/Assets
+             addGeoJsonData('https://web.fulcrumapp.com/shares/25ec4d81d620c4c7.geojson', 'Infrastructure Planning/Assets');  //Infrastructure Planning/Assets
         });
 
     fetch('https://web.fulcrumapp.com/shares/0f0da1c8702f0aa6.geojson')
