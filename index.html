@@ -51,7 +51,7 @@
             padding: 5px;
             background-color: #f1f1f1;
             border-radius: 5px;
-            margin-bottom: 55px;
+            margin-bottom: 15px;
             text-align: left;
             width: 100%;
         }
@@ -269,7 +269,7 @@
                 <span>Local Road</span>
             </div>
             <div class="legend-key" data-layer="RIGARUS">
-                <div class="legend-color" style="background-color: #cb0d0c;"></div>
+                <div class="legend-color" style="background-color: #ff50f0;"></div>
                 <span>RIGARUS</span>
             </div>
         </div>
@@ -288,6 +288,36 @@
             </div>
         </div>
     </div>
+    <div class="legend-category">
+        <span class="category-title">Civil Projects</span>
+        <div class="legend-group">
+            <div class="legend-key" data-layer="Design Phase">
+                <div class="legend-color" style="background-color: #294184;"></div>
+                <span>Design Phase</span>
+            </div>
+            <div class="legend-key" data-layer="Procurement Phase">
+                <div class="legend-color" style="background-color: #1891c9;"></div>
+                <span>Procurement Phase</span>
+            </div>
+            <div class="legend-key" data-layer="Contract Awarded">
+                <div class="legend-color" style="background-color: #ffd300;"></div>
+                <span>Contract Awarded</span>
+            </div>
+            <div class="legend-key" data-layer="Construction Phase">
+                <div class="legend-color" style="background-color: #ff8819;"></div>
+                <span>Construction Phase</span>
+            </div>
+            <div class="legend-key" data-layer="Completed">
+                <div class="legend-color" style="background-color: #87d30f;"></div>
+                <span>Completed</span>
+            </div>
+            <div class="legend-key" data-layer="On-hold">
+                <div class="legend-color" style="background-color: #cb0d0c;"></div>
+                <span>On-hold</span>
+            </div>
+        </div>
+    </div>
+</div>
 </div>
 
     
@@ -295,7 +325,7 @@
         <input type="date" id="dateInput" />
         <input type="range" id="slider" min="0" max="100" />
         <label for="activeProjectsToggle">
-            <input type="checkbox" id="activeProjectsToggle" /> Show Only Active Projects
+            <input type="checkbox" id="activeProjectsToggle" checked/> Show Only Active Projects
         </label>
     </div>
     
@@ -448,6 +478,12 @@ function parseDateString(dateString) {
 
     const [year, month, day] = dateString.split('-');
     return new Date(year, month - 1, day);
+}
+
+// Function to format text string into currency
+function formatCurrency(amount) {
+    const formattedAmount = new Intl.NumberFormat('en-US').format(amount);
+    return `$${formattedAmount}`;
 }
 
 let visibleStatuses = []
@@ -669,6 +705,84 @@ function filterDataRIGARUS() {
     map.getSource('RIGARUS').setData(filteredGeoJson);
 }
 
+function filterDataCivilOps(selectedDate) {
+    const mcwData = window.originalMCW;
+    const capitalData = window.originalCapital;
+
+    // Define the allowed statuses
+    const allowedStatuses = [
+        'Design Phase',
+        'Procurement Phase',
+        'Contract Awarded',
+        'Construction Phase',
+        'Completed',
+        'On-hold'
+    ];
+
+    // Check if the selected date is in the past or future
+    const currentDate = new Date();
+    const isFutureDate = new Date(selectedDate) > currentDate;
+
+    // Function to filter features based on status, date, and active checkbox
+    const filterFeatures = (geojsonData) => {
+        // Check if geojsonData is valid and contains features
+        if (!geojsonData || !geojsonData.features) {
+            console.error("GeoJSON data or features are missing");
+            return []; // Return an empty array if the data is invalid
+        }
+
+        const toggleActiveOnly = document.getElementById('activeProjectsToggle').checked;
+
+        return geojsonData.features.filter(feature => {
+            const status = feature.properties.status ? feature.properties.status.trim() : '';
+            const isAllowedStatus = allowedStatuses.includes(status);
+            const isVisibleStatus = visibleStatuses.length === 0 || visibleStatuses.includes(status);
+
+            // If active projects toggle is on, exclude Completed, On-hold, and Design Phase
+            const isActive = toggleActiveOnly
+            ? !['Completed', 'On-hold', 'Design Phase'].includes(status)  // Exclude these statuses
+            : true;
+
+            // Get project date
+            const projectDate = feature.properties.date_rfq_was_advertised;
+            const isProjectInFuture = projectDate ? new Date(projectDate) > selectedDate : false;
+
+            // If the project date is in the future, hide the project
+            if (isProjectInFuture) {
+                return false; // Hide the project
+            }
+
+            // If it's a future date, hide all projects
+            if (isFutureDate) {
+                return false;  // Hide all projects
+            }
+
+            // Return features only if they match the allowed, visible, active, and date status
+            return isAllowedStatus && isVisibleStatus && isActive;
+        });
+    };
+
+    // Filter features for both datasets
+    const filteredMCWFeatures = filterFeatures(mcwData);
+    const filteredCapitalFeatures = filterFeatures(capitalData);
+
+    // Combine the filtered features into one GeoJSON object
+    const combinedFilteredGeoJson = {
+        type: 'FeatureCollection',
+        features: [...filteredMCWFeatures, ...filteredCapitalFeatures]
+    };
+
+    // Update the map sources with the filtered data for both datasets
+    map.getSource('MCW (Operations)')?.setData({
+        type: 'FeatureCollection',
+        features: filteredMCWFeatures
+    });
+
+    map.getSource('Capital Projects (Operations)')?.setData({
+        type: 'FeatureCollection',
+        features: filteredCapitalFeatures
+    });
+}
 
 // Toggle visibility of legend categories when the category title is clicked
 document.querySelectorAll('.category-title').forEach(title => {
@@ -712,6 +826,7 @@ document.querySelectorAll('.legend-key').forEach(item => {
         filterDataPSP();
         filterDataIPAssets();
         filterDataRIGARUS();
+        filterDataCivilOps();
     });
 });
 
@@ -723,6 +838,7 @@ dateInput.addEventListener('change', function() {
     filterDataTMP();
     filterDataCHP();
     filterDataIPAssets();
+    filterDataCivilOps(selectedDate);
 });
     
 // Event listener for slider input (date slider)
@@ -732,6 +848,7 @@ slider.addEventListener('input', function() {
     filterDataTMP();
     filterDataCHP();
     filterDataIPAssets();
+    filterDataCivilOps(selectedDate);
 });
 
 // Event listener for active projects checkbox
@@ -742,6 +859,7 @@ document.getElementById('activeProjectsToggle').addEventListener('change', () =>
     filterDataPSP();
     filterDataIPAssets();
     filterDataRIGARUS();
+    filterDataCivilOps();
 });
 
 // Initialize map
@@ -803,6 +921,20 @@ map.on('load', function () {
              addGeoJsonData('https://web.fulcrumapp.com/shares/0f0da1c8702f0aa6.geojson', 'RIGARUS');  //RIGARUS
         });
 
+    fetch('https://web.fulcrumapp.com/shares/f8f72f8fabb615a8.geojson')
+         .then(response => response.json())
+         .then(data => {
+             window.originalCapital = data; 
+             addGeoJsonData('https://web.fulcrumapp.com/shares/f8f72f8fabb615a8.geojson', 'Capital Projects (Operations)');  //Civil Capital Projects (Operations)
+        });
+
+    fetch('https://web.fulcrumapp.com/shares/080a3efde94fa172.geojson')
+         .then(response => response.json())
+         .then(data => {
+             window.originalMCW = data; 
+             addGeoJsonData('https://web.fulcrumapp.com/shares/080a3efde94fa172.geojson', 'MCW (Operations)');  //MCW (Operations)
+        });
+
 
     const icons = {
         'road-closed': 'https://raw.githubusercontent.com/MeltonEngServ/Traffic-Management-Plans-Registry/refs/heads/main/assets/road-closed-icon.png',
@@ -832,6 +964,94 @@ function addGeoJsonData(geojsonUrl, sourceId) {
                 type: 'geojson',
                 data: data
             });
+
+// Polygon layer
+map.addLayer({
+    'id': `${sourceId}-polygons-layer`,
+    'type': 'fill',
+    'source': sourceId,
+    'filter': ['==', '$type', 'Polygon'],
+    'paint': {
+        'fill-color': [
+            'case',
+            //Traffic
+            ['==', ['get', 'status'], 'Road Closed'], '#db0000',
+            ['==', ['get', 'status'], ' Lane Closure'], '#ff8819',
+            ['==', ['get', 'status'], 'Temporary Traffic Signals'], '#294184',
+            ['==', ['get', 'status'], 'Truck Site Access'], '#1891c9',
+            ['==', ['get', 'status'], 'No Traffic Impacts'], '#87d30f',
+            ['==', ['get', 'status'], 'Not Defined'], '#cf04b4',
+            //Subdivisions
+            ['==', ['get', 'status'], 'Upcoming'], '#f711ff',
+            ['==', ['get', 'status'], 'In construction'], '#ff9011',
+            ['==', ['get', 'status'], 'Landscape In Construction'], '#ff9011',
+            ['==', ['get', 'status'], 'Bulk earth & sewer'], '#a37002',
+            //PSP Road Cross Sections
+            ['==', ['get', 'status'], 'Local'], '#76bf00',
+            ['==', ['get', 'status'], 'Connector'], '#ffe46b',
+            ['==', ['get', 'status'], 'Secondary Arterial'], '#ff983e',
+            ['==', ['get', 'status'], 'Primary Arterial'], '#ed4e4e',
+            //Infrastructure Planning/Assets
+            ['==', ['get', 'status'], 'Land'], '#00bf86',
+            ['==', ['get', 'status'], 'Transport'], '#dd9000',
+            //RIGARUS
+            ['==', ['get', 'status'], 'RIGARUS'], '#ff50f0',
+            //Operations
+            ['==', ['get', 'status'], 'Design Phase'], '#294184',
+            ['==', ['get', 'status'], 'Procurement Phase'], '#1891c9',
+            ['==', ['get', 'status'], 'Contract Awarded'], '#ffd300',
+            ['==', ['get', 'status'], 'Construction Phase'], '#ff8819',
+            ['==', ['get', 'status'], 'Completed'], '#87d30f',
+            ['==', ['get', 'status'], 'On-hold'], '#cb0d0c',
+            '#888888'
+        ],
+        'fill-opacity': 0.5
+    }
+});
+
+// Line layer
+map.addLayer({
+    'id': `${sourceId}-lines-layer`,
+    'type': 'line',
+    'source': sourceId,
+    'filter': ['==', '$type', 'LineString'],
+    'paint': {
+        'line-width': 3,
+        'line-color': [
+            'case',
+            //Traffic
+            ['==', ['get', 'status'], 'Road Closed'], '#db0000',
+            ['==', ['get', 'status'], ' Lane Closure'], '#ff8819',
+            ['==', ['get', 'status'], 'Temporary Traffic Signals'], '#294184',
+            ['==', ['get', 'status'], 'Truck Site Access'], '#1891c9',
+            ['==', ['get', 'status'], 'No Traffic Impacts'], '#87d30f',
+            ['==', ['get', 'status'], 'Not Defined'], '#cf04b4',
+            //Subdivisions
+            ['==', ['get', 'status'], 'Upcoming'], '#f711ff',
+            ['==', ['get', 'status'], 'In construction'], '#ff9011',
+            ['==', ['get', 'status'], 'Landscape In Construction'], '#ff9011',
+            ['==', ['get', 'status'], 'Bulk earth & sewer'], '#a37002',
+            //PSP Road Cross Sections
+            ['==', ['get', 'status'], 'Local'], '#76bf00',
+            ['==', ['get', 'status'], 'Connector'], '#ffe46b',
+            ['==', ['get', 'status'], 'Secondary Arterial'], '#ff983e',
+            ['==', ['get', 'status'], 'Primary Arterial'], '#ed4e4e',
+            //Infrastructure Planning/Assets
+            ['==', ['get', 'status'], 'Land'], '#00bf86',
+            ['==', ['get', 'status'], 'Transport'], '#dd9000',
+            //RIGARUS
+            ['==', ['get', 'status'], 'RIGARUS'], '#ff50f0',
+            //Operations
+            ['==', ['get', 'status'], 'Design Phase'], '#294184',
+            ['==', ['get', 'status'], 'Procurement Phase'], '#1891c9',
+            ['==', ['get', 'status'], 'Contract Awarded'], '#ffd300',
+            ['==', ['get', 'status'], 'Construction Phase'], '#ff8819',
+            ['==', ['get', 'status'], 'Completed'], '#87d30f',
+            ['==', ['get', 'status'], 'On-hold'], '#cb0d0c',
+            '#888888'
+        ]
+    }
+});
 
 // Icon layer
 map.addLayer({
@@ -885,7 +1105,14 @@ map.addLayer({
             ['==', ['get', 'status'], 'Land'], '#00bf86',
             ['==', ['get', 'status'], 'Transport'], '#dd9000',
             //RIGARUS
-            ['==', ['get', 'status'], 'RIGARUS'], '#cb0d0c',
+            ['==', ['get', 'status'], 'RIGARUS'], '#ff50f0',
+            //Operations
+            ['==', ['get', 'status'], 'Design Phase'], '#294184',
+            ['==', ['get', 'status'], 'Procurement Phase'], '#1891c9',
+            ['==', ['get', 'status'], 'Contract Awarded'], '#ffd300',
+            ['==', ['get', 'status'], 'Construction Phase'], '#ff8819',
+            ['==', ['get', 'status'], 'Completed'], '#87d30f',
+            ['==', ['get', 'status'], 'On-hold'], '#cb0d0c',
             '#888888'
         ],
         // Control opacity based on icon availability
@@ -899,80 +1126,6 @@ map.addLayer({
     }
 });
 
-// Line layer
-map.addLayer({
-    'id': `${sourceId}-lines-layer`,
-    'type': 'line',
-    'source': sourceId,
-    'filter': ['==', '$type', 'LineString'],
-    'paint': {
-        'line-width': 3,
-        'line-color': [
-            'case',
-            //Traffic
-            ['==', ['get', 'status'], 'Road Closed'], '#db0000',
-            ['==', ['get', 'status'], ' Lane Closure'], '#ff8819',
-            ['==', ['get', 'status'], 'Temporary Traffic Signals'], '#294184',
-            ['==', ['get', 'status'], 'Truck Site Access'], '#1891c9',
-            ['==', ['get', 'status'], 'No Traffic Impacts'], '#87d30f',
-            ['==', ['get', 'status'], 'Not Defined'], '#cf04b4',
-            //Subdivisions
-            ['==', ['get', 'status'], 'Upcoming'], '#f711ff',
-            ['==', ['get', 'status'], 'In construction'], '#ff9011',
-            ['==', ['get', 'status'], 'Landscape In Construction'], '#ff9011',
-            ['==', ['get', 'status'], 'Bulk earth & sewer'], '#a37002',
-            //PSP Road Cross Sections
-            ['==', ['get', 'status'], 'Local'], '#76bf00',
-            ['==', ['get', 'status'], 'Connector'], '#ffe46b',
-            ['==', ['get', 'status'], 'Secondary Arterial'], '#ff983e',
-            ['==', ['get', 'status'], 'Primary Arterial'], '#ed4e4e',
-            //Infrastructure Planning/Assets
-            ['==', ['get', 'status'], 'Land'], '#00bf86',
-            ['==', ['get', 'status'], 'Transport'], '#dd9000',
-            //RIGARUS
-            ['==', ['get', 'status'], 'RIGARUS'], '#cb0d0c',
-            '#888888'
-        ]
-    }
-});
-
-// Polygon layer
-map.addLayer({
-    'id': `${sourceId}-polygons-layer`,
-    'type': 'fill',
-    'source': sourceId,
-    'filter': ['==', '$type', 'Polygon'],
-    'paint': {
-        'fill-color': [
-            'case',
-            //Traffic
-            ['==', ['get', 'status'], 'Road Closed'], '#db0000',
-            ['==', ['get', 'status'], ' Lane Closure'], '#ff8819',
-            ['==', ['get', 'status'], 'Temporary Traffic Signals'], '#294184',
-            ['==', ['get', 'status'], 'Truck Site Access'], '#1891c9',
-            ['==', ['get', 'status'], 'No Traffic Impacts'], '#87d30f',
-            ['==', ['get', 'status'], 'Not Defined'], '#cf04b4',
-            //Subdivisions
-            ['==', ['get', 'status'], 'Upcoming'], '#f711ff',
-            ['==', ['get', 'status'], 'In construction'], '#ff9011',
-            ['==', ['get', 'status'], 'Landscape In Construction'], '#ff9011',
-            ['==', ['get', 'status'], 'Bulk earth & sewer'], '#a37002',
-            //PSP Road Cross Sections
-            ['==', ['get', 'status'], 'Local'], '#76bf00',
-            ['==', ['get', 'status'], 'Connector'], '#ffe46b',
-            ['==', ['get', 'status'], 'Secondary Arterial'], '#ff983e',
-            ['==', ['get', 'status'], 'Primary Arterial'], '#ed4e4e',
-            //Infrastructure Planning/Assets
-            ['==', ['get', 'status'], 'Land'], '#00bf86',
-            ['==', ['get', 'status'], 'Transport'], '#dd9000',
-            //RIGARUS
-            ['==', ['get', 'status'], 'RIGARUS'], '#cb0d0c',
-            '#888888'
-        ],
-        'fill-opacity': 0.5
-    }
-});
-
 
 // Function to apply filters once sources initialised
 function applyFiltersWhenSourcesReady() {
@@ -980,6 +1133,9 @@ function applyFiltersWhenSourcesReady() {
         { sourceId: 'Subdivision Construction', filterFunction: filterDataCHP },
         { sourceId: 'Traffic TMP Registry', filterFunction: filterDataTMP },
         { sourceId: 'PSP Road Cross Sections', filterFunction: filterDataPSP },
+        { sourceId: 'RIGARUS', filterFunction: filterDataRIGARUS },
+        { sourceId: 'MCW (Operations)', filterFunction: filterDataCivilOps },
+        { sourceId: 'Capital Projects (Operations)', filterFunction: filterDataCivilOps },
         { sourceId: 'Infrastructure Planning/Assets', filterFunction: filterDataIPAssets }
     ];
 
@@ -1126,7 +1282,7 @@ layers.forEach(layer => {
                                 properties.estate_name_other || 
                                 //PSP Roads
                                 properties.precinct_structure_plan ||
-                                //Infrastructure Planning/Assets
+                                //Infrastructure Planning/Assets and Civil Operations
                                 properties.project_name ||
                                 'N/A'}</h3>`;
 
@@ -1208,7 +1364,29 @@ layers.forEach(layer => {
             { label: 'Project', value: properties.project },
             { label: 'Project No.', value: properties.project_no },
             { label: 'Financial Year', value: properties.fy },
-            { label: 'Comments', value: properties.comments }
+            { label: 'Comments', value: properties.comments },
+
+            //Civil Operations
+            { label: 'Program', value: properties.program },
+            { label: 'Type of Work', value: properties.type_of_work },
+            { label: 'Asset ID', value: properties.asset_id_if_applicable },
+            { label: 'Name of Engineering Designer', value: properties.name_of_engineering_designer },
+            { label: 'Date of Design Plan Transferred from Engineering to Civil Ops', value: properties.date_of_design_plan_transferred_from_engineering_to_civil_op },
+            { label: 'Cost Estimate', value: properties.cost_estimate },
+            { label: 'Budget', value: properties.budget },
+            { label: 'Civil Operations Staff', value: properties.name_of_civil_operations_staff_assigned_to_deliver_the_proje },
+            { label: 'Allocated Financial Year', value: properties.what_financial_year_is_this_project_allocated_to },
+            { label: 'Date RFQ was advertised', value: properties.date_rfq_was_advertised },
+            { label: 'Date RFQ period closed', value: properties.date_rfq_period_closed },
+            { label: 'Date RFA completed', value: properties.date_rfa_completed },
+            { label: 'Date the Project was Awarded', value: properties.date_the_project_was_awarded },
+            { label: 'Contractor undertaking Works', value: properties.name_of_contractor_undertaking_works },
+            { label: 'Date when construction started', value: properties.date_when_construction_started },
+            { label: 'Date when construction was completed', value: properties.date_when_construction_was_completed },
+            { label: 'Project Cost', value: formatCurrency(properties.project_cost) },
+            { label: 'Variations Cost', value: formatCurrency(properties.variations_cost) },
+            { label: 'Total Cost', value: formatCurrency(properties.total_cost) }
+
         ];
 
         // Hide empty and N/A fields
