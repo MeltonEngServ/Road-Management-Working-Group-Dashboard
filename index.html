@@ -482,9 +482,15 @@ function parseDateString(dateString) {
 
 // Function to format text string into currency
 function formatCurrency(amount) {
+    // Check if the amount is a valid number
+    if (isNaN(amount) || amount === null || amount === '') {
+        return 'N/A';
+    }
+    
     const formattedAmount = new Intl.NumberFormat('en-US').format(amount);
     return `$${formattedAmount}`;
 }
+
 
 let visibleStatuses = []
 
@@ -907,11 +913,11 @@ map.on('load', function () {
             addGeoJsonData('https://web.fulcrumapp.com/shares/bb8aae5257d194f5.geojson', 'PSP Road Cross Sections');   //PSP Road Cross Sections
         });
 
-    fetch('https://web.fulcrumapp.com/shares/25ec4d81d620c4c7.geojson')
+    fetch('https://web.fulcrumapp.com/shares/0107845e48091efd.geojson')
          .then(response => response.json())
          .then(data => {
              window.originalIPAssets = data; 
-             addGeoJsonData('https://web.fulcrumapp.com/shares/25ec4d81d620c4c7.geojson', 'Infrastructure Planning/Assets');  //Infrastructure Planning/Assets
+             addGeoJsonData('https://web.fulcrumapp.com/shares/0107845e48091efd.geojson', 'Infrastructure Planning/Assets');  //Infrastructure Planning/Assets
         });
 
     fetch('https://web.fulcrumapp.com/shares/0f0da1c8702f0aa6.geojson')
@@ -1215,7 +1221,17 @@ layers.forEach(layer => {
             { label: 'Project', value: properties.project },
             { label: 'Project or Program Start Year', value: properties.project_or_program_start_year },
             { label: 'Project Progress', value: properties.project_progress },
-            { label: 'Project Updates', value: properties.updates }
+            { label: 'Project Updates', value: properties.updates },
+
+            //Civil Operations
+            { label: 'Program', value: properties.program },
+            { label: 'Type of Work', value: properties.type_of_work },
+            { label: 'Civil Operations Staff', value: properties.name_of_civil_operations_staff_assigned_to_deliver_the_proje },
+            { label: 'Contractor undertaking Works', value: properties.name_of_contractor_undertaking_works },
+            { label: 'Date when construction started', value: properties.date_when_construction_started },
+            { label: 'Date when construction was completed', value: properties.date_when_construction_was_completed },
+            { label: 'Total Cost', value: formatCurrency(properties.total_cost) }
+
         ];
 
         let tooltipContent = '';
