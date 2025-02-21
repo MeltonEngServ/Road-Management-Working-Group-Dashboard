@@ -16,8 +16,10 @@ mapboxgl.accessToken = 'pk.eyJ1IjoibWVsdG9uZ2lzZGV2IiwiYSI6ImNtN2R6eGNxdjA4Zzcyb
 const map = new mapboxgl.Map({
   container: 'map',
   style: 'mapbox://styles/meltongisdev/cltp6z6ie01dk01raewq8b9ch', // Initial (Greyscale)
-  center: [144.646838, -37.712344],
-  zoom: 11,
+  center: [144.6261962, -37.712486],
+  zoom: 11.5,
+  pitch: 40,
+  bearing: 5,
   transformRequest: (url, resourceType) => {
     if (
       resourceType === "Tile" &&

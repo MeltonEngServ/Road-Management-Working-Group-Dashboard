@@ -1,0 +1,1 @@
+formatCurrency function doesnt work for $xxxxx.x values, might need to update fulcrum input field

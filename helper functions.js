@@ -8,12 +8,21 @@ function parseDateString(dateString) {
 
 // Function to format text string into currency
 function formatCurrency(amount) {
-    // Check if the amount is a valid number
-    if (isNaN(amount) || amount === null || amount === '') {
+
+    if (typeof amount === 'string') {
+        amount = amount.replace(/[^0-9.-]+/g, '').trim();  
+    }
+
+    if (amount === null || amount === undefined || amount === '') {
         return 'N/A';
     }
-    
-    const formattedAmount = new Intl.NumberFormat('en-US').format(amount);
+
+    const numericAmount = parseFloat(amount);
+    if (isNaN(numericAmount)) {
+        return 'N/A';
+    }
+
+    const formattedAmount = new Intl.NumberFormat('en-US').format(numericAmount);
     return `$${formattedAmount}`;
 }
 

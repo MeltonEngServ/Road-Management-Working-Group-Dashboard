@@ -153,7 +153,7 @@ function filterDataIPAssets() {
 
         // Parse the start date
         if (projectStartStr && projectStartStr.match(/^\d{2}\/\d{2}$/)) {
-            const yearSuffix = projectStartStr.split('/')[1];
+            const yearSuffix = projectStartStr.split('/')[0];
             const year = `20${yearSuffix}`;
             projectStartDate = new Date(`July 1, ${year}`);
         } else if (projectStartStr && projectStartStr.includes('1st July')) {
