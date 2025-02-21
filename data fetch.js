@@ -22,11 +22,11 @@ map.on('load', function () {
     window.originalRIGARUS = null; // For RIGARUS
 
     // Fetch and store the original data for filtering
-    fetch('https://web.fulcrumapp.com/shares/7720c6835056cfa0.geojson')
-        .then(response => response.json())
-        .then(data => {
-            window.originalTMPData = data; 
-            addGeoJsonData('https://web.fulcrumapp.com/shares/7720c6835056cfa0.geojson', 'Traffic TMP Registry');  //Traffic TMP Registry
+    fetch('https://web.fulcrumapp.com/shares/0107845e48091efd.geojson')
+         .then(response => response.json())
+         .then(data => {
+             window.originalIPAssets = data; 
+             addGeoJsonData('https://web.fulcrumapp.com/shares/0107845e48091efd.geojson', 'Infrastructure Planning/Assets');  //Infrastructure Planning/Assets
         });
 
     fetch('https://web.fulcrumapp.com/shares/bf60f595b238b79a.geojson')
@@ -41,13 +41,6 @@ map.on('load', function () {
         .then(data => {
             window.originalPSP = data; 
             addGeoJsonData('https://web.fulcrumapp.com/shares/bb8aae5257d194f5.geojson', 'PSP Road Cross Sections');   //PSP Road Cross Sections
-        });
-
-    fetch('https://web.fulcrumapp.com/shares/0107845e48091efd.geojson')
-         .then(response => response.json())
-         .then(data => {
-             window.originalIPAssets = data; 
-             addGeoJsonData('https://web.fulcrumapp.com/shares/0107845e48091efd.geojson', 'Infrastructure Planning/Assets');  //Infrastructure Planning/Assets
         });
 
     fetch('https://web.fulcrumapp.com/shares/0f0da1c8702f0aa6.geojson')
@@ -71,6 +64,12 @@ map.on('load', function () {
              addGeoJsonData('https://web.fulcrumapp.com/shares/080a3efde94fa172.geojson', 'MCW (Operations)');  //MCW (Operations)
         });
 
+    fetch('https://web.fulcrumapp.com/shares/7720c6835056cfa0.geojson')
+        .then(response => response.json())
+        .then(data => {
+            window.originalTMPData = data; 
+            addGeoJsonData('https://web.fulcrumapp.com/shares/7720c6835056cfa0.geojson', 'Traffic TMP Registry');  //Traffic TMP Registry
+        });
 
     const icons = {
         'road-closed': 'https://raw.githubusercontent.com/MeltonEngServ/Traffic-Management-Plans-Registry/refs/heads/main/assets/road-closed-icon.png',

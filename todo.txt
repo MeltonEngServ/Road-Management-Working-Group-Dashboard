@@ -1,1 +1,10 @@
-formatCurrency function doesnt work for $xxxxx.x values, might need to update fulcrum input field
+data layers across data sources
+    currently:
+        polygon1, line1, points1, icon1, polygon2, line2, points2, icon2
+    should be:
+        polygon1, polygon2, line1, line2, points1, points2, icon1, icon2
+
+use bootstrap, update ui to look better
+    -add suburb/wards view
+    -add light/dark mode
+    -update themes function (search bar, legend and date filter)

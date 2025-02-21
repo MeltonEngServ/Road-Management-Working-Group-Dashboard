@@ -1,183 +1,194 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="initial-scale=1.0">
-    <title>Road Management Working Group Dashboard</title>
-    <link href="https://api.mapbox.com/mapbox-gl-js/v3.8.0/mapbox-gl.css" rel="stylesheet">
-    <script src="https://api.mapbox.com/mapbox-gl-js/v3.8.0/mapbox-gl.js"></script>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="initial-scale=1.0">
+        <meta name="author" content="Johnston Wang">
+        <title>Road Management Working Group Dashboard</title>
+        <link href="https://api.mapbox.com/mapbox-gl-js/v3.8.0/mapbox-gl.css" rel="stylesheet">
+        <script src="https://api.mapbox.com/mapbox-gl-js/v3.8.0/mapbox-gl.js"></script>
 
-    <link href="styles.css" rel="stylesheet">
-</head>
-<body>
-    <div id="map"></div>
-    <div class="tooltip" id="tooltip"></div>
-    <div id="searchBar">
-        <input type="text" id="address" placeholder="Enter an address" autocomplete="off" />
-        <div id="suggestions" style="position: absolute; background: white; border: 1px solid #ccc; z-index: 1; display: none;"></div>
-    </div>
+        <link href="styles.css" rel="stylesheet">
+    </head>
 
-    <div id="modal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <div id="modal-body"></div>
+    <body>
+        <!-- Map -->
+        <div id="map"></div>
+
+        <!-- Search Bar -->
+        <div id="searchBar">
+            <input type="text" id="address" placeholder="Enter an address" autocomplete="off" />
+            <div id="suggestions" style="position: absolute; background: white; border: 1px solid #ccc; z-index: 1; display: none;"></div>
         </div>
-    </div>
 
-<div id="legend">
-    <div class="legend-category">
-        <span class="category-title">Traffic</span>
-        <div class="legend-group">
-            <div class="legend-key" data-layer="Road Closed">
-                <img class="legend-icon" src="https://raw.githubusercontent.com/MeltonEngServ/Traffic-Management-Plans-Registry/refs/heads/main/assets/road-closed-icon.png" alt="Road Closed Icon" style="width: 25px; height: 25px; margin-right: 5px;">
-                <span>Road Closed</span>
-            </div>
-            <div class="legend-key" data-layer="Lane Closure">
-                <img class="legend-icon" src="https://raw.githubusercontent.com/MeltonEngServ/Traffic-Management-Plans-Registry/refs/heads/main/assets/lane-closure-icon.png" alt="Lane Closure Icon" style="width: 25px; height: 25px; margin-right: 5px;">
-                <span>Lane Closure</span>
-            </div>
-            <div class="legend-key" data-layer="Temporary Traffic Signals">
-                <div class="legend-color" style="background-color: #294184;"></div>
-                <span>Temporary Traffic Signals</span>
-            </div>
-            <div class="legend-key" data-layer="Truck Site Access">
-                <img class="legend-icon" src="https://raw.githubusercontent.com/MeltonEngServ/Traffic-Management-Plans-Registry/refs/heads/main/assets/truck-site-access-icon.png" alt="Truck Site Access Icon" style="width: 25px; height: 25px; margin-right: 5px;">
-                <span>Truck Site Access</span>
-            </div>
-            <div class="legend-key" data-layer="No Traffic Impacts">
-                <div class="legend-color" style="background-color: #87d30f;"></div>
-                <span>No Traffic Impacts</span>
-            </div>
-            <div class="legend-key" data-layer="Not Defined">
-                <div class="legend-color" style="background-color: #cf04b4;"></div>
-                <span>Traffic Impact Not Defined</span>
+        <!-- Tooltip -->
+        <div class="tooltip" id="tooltip"></div>
+
+        <!-- Modal -->
+        <div id="modal" class="modal">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <div id="modal-body"></div>
             </div>
         </div>
-    </div>
 
-    <div class="legend-category">
-        <span class="category-title">Subdivision Works</span>
-        <div class="legend-group">
-            <div class="legend-key" data-layer="Upcoming">
-                <div class="legend-color" style="background-color: #f711ff;"></div>
-                <span>Upcoming Subdivision Works</span>
+        <!-- Legends -->
+            <!-- Traffic Management Plan Registry -->
+            <div id="legend">
+                <div class="legend-category">
+                    <span class="category-title">Traffic</span>
+                    <div class="legend-group">
+                        <div class="legend-key" data-layer="Road Closed">
+                            <img class="legend-icon" src="https://raw.githubusercontent.com/MeltonEngServ/Traffic-Management-Plans-Registry/refs/heads/main/assets/road-closed-icon.png" alt="Road Closed Icon" style="width: 25px; height: 25px; margin-right: 5px;">
+                            <span>Road Closed</span>
+                        </div>
+                        <div class="legend-key" data-layer="Lane Closure">
+                            <img class="legend-icon" src="https://raw.githubusercontent.com/MeltonEngServ/Traffic-Management-Plans-Registry/refs/heads/main/assets/lane-closure-icon.png" alt="Lane Closure Icon" style="width: 25px; height: 25px; margin-right: 5px;">
+                            <span>Lane Closure</span>
+                        </div>
+                        <div class="legend-key" data-layer="Temporary Traffic Signals">
+                            <div class="legend-color" style="background-color: #294184;"></div>
+                            <span>Temporary Traffic Signals</span>
+                        </div>
+                        <div class="legend-key" data-layer="Truck Site Access">
+                            <img class="legend-icon" src="https://raw.githubusercontent.com/MeltonEngServ/Traffic-Management-Plans-Registry/refs/heads/main/assets/truck-site-access-icon.png" alt="Truck Site Access Icon" style="width: 25px; height: 25px; margin-right: 5px;">
+                            <span>Truck Site Access</span>
+                        </div>
+                        <div class="legend-key" data-layer="No Traffic Impacts">
+                            <div class="legend-color" style="background-color: #87d30f;"></div>
+                            <span>No Traffic Impacts</span>
+                        </div>
+                        <div class="legend-key" data-layer="Not Defined">
+                            <div class="legend-color" style="background-color: #cf04b4;"></div>
+                            <span>Traffic Impact Not Defined</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subdivision Works -->
+                <div class="legend-category">
+                    <span class="category-title">Subdivision Works</span>
+                    <div class="legend-group">
+                        <div class="legend-key" data-layer="Upcoming">
+                            <div class="legend-color" style="background-color: #f711ff;"></div>
+                            <span>Upcoming Subdivision Works</span>
+                        </div>
+                        <div class="legend-key" data-layer="In construction">
+                            <div class="legend-color" style="background-color: #ff9011;"></div>
+                            <span>Subdivision Works In Construction</span>
+                        </div>
+                        <div class="legend-key" data-layer="Landscape In Construction">
+                            <div class="legend-color" style="background-color: #ff9011;"></div>
+                            <span>Landscape In Construction</span>
+                        </div>
+                        <div class="legend-key" data-layer="Bulk earth & sewer">
+                            <div class="legend-color" style="background-color: #a37002;"></div>
+                            <span>Bulk earth & sewer</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Strategic Transport Planning -->
+                <div class="legend-category">
+                    <span class="category-title">Strategic Transport Planning</span>
+                    <div class="legend-group">
+                        <div class="legend-key" data-layer="Primary Arterial">
+                            <div class="legend-color" style="background-color: #ed4e4e;"></div>
+                            <span>Primary Arterial</span>
+                        </div>
+                        <div class="legend-key" data-layer="Secondary Arterial">
+                            <div class="legend-color" style="background-color: #ff983e;"></div>
+                            <span>Secondary Arterial</span>
+                        </div>
+                        <div class="legend-key" data-layer="Connector">
+                            <div class="legend-color" style="background-color: #ffe46b;"></div>
+                            <span>Connector Road</span>
+                        </div>
+                        <div class="legend-key" data-layer="Local">
+                            <div class="legend-color" style="background-color: #76bf00;"></div>
+                            <span>Local Road</span>
+                        </div>
+                        <div class="legend-key" data-layer="RIGARUS">
+                            <div class="legend-color" style="background-color: #ff50f0;"></div>
+                            <span>RIGARUS</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Infrastructure Planning -->
+                <div class="legend-category">
+                    <span class="category-title">Infrastructure Planning</span>
+                    <div class="legend-group">
+                        <div class="legend-key" data-layer="Land">
+                            <div class="legend-color" style="background-color: #00bf86;"></div>
+                            <span>Land</span>
+                        </div>
+                        <div class="legend-key" data-layer="Transport">
+                            <div class="legend-color" style="background-color: #dd9000;"></div>
+                            <span>Transport</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Civil Operations -->
+                <div class="legend-category">
+                    <span class="category-title">Civil Projects</span>
+                    <div class="legend-group">
+                        <div class="legend-key" data-layer="Design Phase">
+                            <div class="legend-color" style="background-color: #294184;"></div>
+                            <span>Design Phase</span>
+                        </div>
+                        <div class="legend-key" data-layer="Procurement Phase">
+                            <div class="legend-color" style="background-color: #1891c9;"></div>
+                            <span>Procurement Phase</span>
+                        </div>
+                        <div class="legend-key" data-layer="Contract Awarded">
+                            <div class="legend-color" style="background-color: #ffd300;"></div>
+                            <span>Contract Awarded</span>
+                        </div>
+                        <div class="legend-key" data-layer="Construction Phase">
+                            <div class="legend-color" style="background-color: #ff8819;"></div>
+                            <span>Construction Phase</span>
+                        </div>
+                        <div class="legend-key" data-layer="Completed">
+                            <div class="legend-color" style="background-color: #87d30f;"></div>
+                            <span>Completed</span>
+                        </div>
+                        <div class="legend-key" data-layer="On-hold">
+                            <div class="legend-color" style="background-color: #cb0d0c;"></div>
+                            <span>On-hold</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="legend-key" data-layer="In construction">
-                <div class="legend-color" style="background-color: #ff9011;"></div>
-                <span>Subdivision Works In Construction</span>
-            </div>
-            <div class="legend-key" data-layer="Landscape In Construction">
-                <div class="legend-color" style="background-color: #ff9011;"></div>
-                <span>Landscape In Construction</span>
-            </div>
-            <div class="legend-key" data-layer="Bulk earth & sewer">
-                <div class="legend-color" style="background-color: #a37002;"></div>
-                <span>Bulk earth & sewer</span>
-            </div>
+        
+        <!-- Date Filter -->
+        <div id="dateFilter">
+            <input type="date" id="dateInput" />
+            <input type="range" id="slider" min="0" max="100" />
+            <label for="activeProjectsToggle">
+                <input type="checkbox" id="activeProjectsToggle" checked/> Show Only Active Projects
+            </label>
         </div>
-    </div>
+        
+        <!-- Js Scripts -->
+        <script src="map initialisation.js"></script>
 
-    <div class="legend-category">
-        <span class="category-title">Strategic Planning</span>
-        <div class="legend-group">
-            <div class="legend-key" data-layer="Primary Arterial">
-                <div class="legend-color" style="background-color: #ed4e4e;"></div>
-                <span>Primary Arterial</span>
-            </div>
-            <div class="legend-key" data-layer="Secondary Arterial">
-                <div class="legend-color" style="background-color: #ff983e;"></div>
-                <span>Secondary Arterial</span>
-            </div>
-            <div class="legend-key" data-layer="Connector">
-                <div class="legend-color" style="background-color: #ffe46b;"></div>
-                <span>Connector Road</span>
-            </div>
-            <div class="legend-key" data-layer="Local">
-                <div class="legend-color" style="background-color: #76bf00;"></div>
-                <span>Local Road</span>
-            </div>
-            <div class="legend-key" data-layer="RIGARUS">
-                <div class="legend-color" style="background-color: #ff50f0;"></div>
-                <span>RIGARUS</span>
-            </div>
-        </div>
-    </div>
+        <script src="address search.js"></script>
 
-    <div class="legend-category">
-        <span class="category-title">Infrastructure Planning</span>
-        <div class="legend-group">
-            <div class="legend-key" data-layer="Land">
-                <div class="legend-color" style="background-color: #00bf86;"></div>
-                <span>Land</span>
-            </div>
-            <div class="legend-key" data-layer="Transport">
-                <div class="legend-color" style="background-color: #dd9000;"></div>
-                <span>Transport</span>
-            </div>
-        </div>
-    </div>
-    <div class="legend-category">
-        <span class="category-title">Civil Projects</span>
-        <div class="legend-group">
-            <div class="legend-key" data-layer="Design Phase">
-                <div class="legend-color" style="background-color: #294184;"></div>
-                <span>Design Phase</span>
-            </div>
-            <div class="legend-key" data-layer="Procurement Phase">
-                <div class="legend-color" style="background-color: #1891c9;"></div>
-                <span>Procurement Phase</span>
-            </div>
-            <div class="legend-key" data-layer="Contract Awarded">
-                <div class="legend-color" style="background-color: #ffd300;"></div>
-                <span>Contract Awarded</span>
-            </div>
-            <div class="legend-key" data-layer="Construction Phase">
-                <div class="legend-color" style="background-color: #ff8819;"></div>
-                <span>Construction Phase</span>
-            </div>
-            <div class="legend-key" data-layer="Completed">
-                <div class="legend-color" style="background-color: #87d30f;"></div>
-                <span>Completed</span>
-            </div>
-            <div class="legend-key" data-layer="On-hold">
-                <div class="legend-color" style="background-color: #cb0d0c;"></div>
-                <span>On-hold</span>
-            </div>
-        </div>
-    </div>
-</div>
-</div>
+        <script src="helper functions.js"></script>
 
-    
-    <div id="dateFilter">
-        <input type="date" id="dateInput" />
-        <input type="range" id="slider" min="0" max="100" />
-        <label for="activeProjectsToggle">
-            <input type="checkbox" id="activeProjectsToggle" checked/> Show Only Active Projects
-        </label>
-    </div>
-    
-    <script src="map initialisation.js"></script>
+        <script src="status filter.js"></script>
 
-    <script src="address search.js"></script>
+        <script src="date filter.js"></script>
 
-    <script src="helper functions.js"></script>
+        <script src="active projects.js"></script>
 
-    <script src="status filter.js"></script>
+        <script src="data fetch.js"></script>
 
-    <script src="date filter.js"></script>
+        <script src="main.js"></script>
 
-    <script src="active projects.js"></script>
+        <script src="initialisation filter.js"></script>
 
-    <script src="data fetch.js"></script>
-
-    <script src="data points.js"></script>
-
-    <script src="initialisation filter.js"></script>
-
-    <script src="tooltip.js"></script>
-
-    <script src="modal.js"></script>
-
-</body>
+    </body>
 </html>
